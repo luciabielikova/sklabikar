@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sklabikár - Veselé písmenká pre prvákov</title>
+    <title>Sklabikár - Veselé Písmenká pre Prvákov</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -35,7 +35,7 @@
 
     <style>
         body {
-            font-family: 'Fredoka', cursive, sans-serif;
+            font-family: 'Fredoka', 'Nunito', sans-serif;
             background-color: #F7F9FC;
             background-image: radial-gradient(#FFD166 1.5px, transparent 1.5px), radial-gradient(#118AB2 1.5px, #F7F9FC 1.5px);
             background-size: 60px 60px;
@@ -48,7 +48,7 @@
         .letter-card {
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
             box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
-            touch-action: none; /* Crucial for custom touch/pointer dragging */
+            touch-action: none;
         }
 
         .letter-card:hover {
@@ -66,7 +66,7 @@
             transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .btn-bounce:hover {
-            transform: scale(1.06);
+            transform: scale(1.05);
         }
         .btn-bounce:active {
             transform: scale(0.95);
@@ -99,7 +99,6 @@
             transform: scale(1.08);
         }
 
-        /* Dragging ghost overlay */
         .drag-ghost {
             position: fixed;
             pointer-events: none;
@@ -117,20 +116,20 @@
     <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-brand-yellow sticky top-0 z-40 px-3 sm:px-6 py-2.5 shadow-md">
         <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-4">
             
-            <!-- Logo -->
+            <!-- Logo Sklabikár -->
             <div class="flex items-center gap-2 sm:gap-3 cursor-pointer" onclick="switchMode('explorer')">
                 <div class="bg-brand-pink text-white w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-black shadow-lg transform -rotate-3">
-                    A
+                    S
                 </div>
                 <div>
                     <h1 class="text-xl sm:text-3xl font-black text-brand-purple tracking-wide leading-none">
-                        SKLABIKÁR<span class="text-brand-pink">.sk</span>
+                        SKLABIKÁR
                     </h1>
                     <p class="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Učíme sa písmenká</p>
                 </div>
             </div>
 
-            <!-- Main Mode Switches -->
+            <!-- Main Navigation Buttons -->
             <div class="flex items-center bg-slate-100 p-1 sm:p-1.5 rounded-2xl border-2 border-slate-200 gap-1">
                 <button id="modeExplorerBtn" onclick="switchMode('explorer')" class="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all bg-brand-blue text-white shadow-md">
                     <i class="fa-solid fa-magnifying-glass mr-1"></i>Prieskumník
@@ -145,10 +144,10 @@
         </div>
     </header>
 
-    <!-- Main Content Container -->
+    <!-- Main Application Container -->
     <main class="max-w-5xl w-full mx-auto p-3 sm:p-6 flex-grow flex flex-col justify-center items-center">
 
-        <!-- ==================== TAB 1 & 2: GAME VIEWS (Explorer & Puzzle) ==================== -->
+        <!-- ==================== GAME VIEWS (Explorer & Puzzle) ==================== -->
         <div id="gameView" class="w-full flex flex-col items-center">
 
             <!-- Category Selector Filters -->
@@ -167,41 +166,46 @@
                 </button>
             </div>
 
-            <!-- Active Game Card -->
-            <div class="w-full bg-white rounded-3xl border-4 border-slate-200 p-4 sm:p-8 shadow-2xl relative flex flex-col items-center min-h-[440px] justify-between">
+            <!-- Main Interactive Card -->
+            <div class="w-full bg-white rounded-3xl border-4 border-slate-200 p-4 sm:p-8 shadow-2xl relative flex flex-col items-center min-h-[460px] justify-between">
                 
-                <!-- Category Badge & Counter -->
-                <div class="w-full flex justify-between items-center mb-2 sm:mb-4">
-                    <span id="categoryBadge" class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1">
-                        <i class="fa-solid fa-tag"></i> Zvieratká
-                    </span>
+                <!-- Category Badge & Word Counter & Active Profile Indicator -->
+                <div class="w-full flex flex-wrap justify-between items-center gap-2 mb-2 sm:mb-4">
+                    <div class="flex items-center gap-2">
+                        <span id="categoryBadge" class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1">
+                            <i class="fa-solid fa-tag"></i> Zvieratká
+                        </span>
+                        <span id="activeProfileBadge" class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-bold text-xs sm:text-sm flex items-center gap-1">
+                            <i class="fa-solid fa-user-graduate"></i> <span id="activeProfileBadgeName">Žiak 1</span>
+                        </span>
+                    </div>
                     <span id="wordCounter" class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-bold text-xs sm:text-sm">
                         Dostupné slová: 0
                     </span>
                 </div>
 
-                <!-- Empty State Message (When no words match known letters) -->
+                <!-- Empty State Message -->
                 <div id="noWordsView" class="hidden my-auto py-8 text-center flex flex-col items-center max-w-md">
                     <div class="w-20 h-20 bg-amber-100 text-brand-orange rounded-full flex items-center justify-center text-4xl mb-4 shadow-inner">
                         <i class="fa-solid fa-lock"></i>
                     </div>
                     <h3 class="text-xl sm:text-2xl font-black text-slate-800 mb-2">Žiadne dostupné slová</h3>
                     <p class="text-sm sm:text-base font-bold text-slate-500 mb-6">
-                        Pre zvolené písmenká sme nenašli žiadne slovo. Skús v nastaveniach označiť viac písmeniek, ktoré už poznáš!
+                        Pre zvolený profil a vybrané písmenká sme nenašli žiadne slovo. Skús v "Moje písmenká" označiť viac písmeniek!
                     </p>
                     <button onclick="switchMode('settings')" class="bg-brand-orange text-white px-6 py-3 rounded-2xl font-black text-base border-b-4 border-amber-700 btn-bounce shadow-lg">
                         <i class="fa-solid fa-sliders mr-2"></i>Otvoriť "Moje písmenká"
                     </button>
                 </div>
 
-                <!-- Word Display Container -->
+                <!-- Active Word Display Container -->
                 <div id="wordArea" class="w-full flex flex-col items-center my-auto">
                     
                     <!-- Image Illustration Box -->
                     <div class="relative group my-2">
                         <div id="imageContainer" class="w-40 h-40 sm:w-56 sm:h-56 bg-gradient-to-br from-blue-50 to-amber-50 rounded-3xl border-4 border-brand-yellow p-4 flex items-center justify-center shadow-inner overflow-hidden transition-transform duration-300">
-                            <div id="svgIllustration" class="w-full h-full flex items-center justify-center">
-                                <!-- SVG loaded dynamically -->
+                            <div id="illustrationBox" class="w-full h-full flex items-center justify-center">
+                                <!-- Image or SVG inserted dynamically -->
                             </div>
                         </div>
 
@@ -221,17 +225,20 @@
                     </div>
 
                     <!-- Scrambled Letter Bank for Puzzle Mode -->
-                    <div id="scrambledPoolContainer" class="hidden w-full mt-2 pt-4 border-t-2 border-dashed border-slate-200">
+                    <div id="scrambledPoolContainer" class="hidden w-full mt-2 pt-4 border-t-2 border-dashed border-slate-200 flex flex-col items-center">
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-wider text-center mb-3">
                             Dostupné písmenká (klikni alebo pretiahni):
                         </p>
-                        <div id="letterPool" class="flex flex-wrap justify-center gap-2 sm:gap-3 min-h-[64px]">
+                        <div id="letterPool" class="flex flex-wrap justify-center gap-2 sm:gap-3 min-h-[64px] mb-3">
                             <!-- Scrambled tiles -->
                         </div>
+                        <button id="checkPuzzleBtn" onclick="manualCheckPuzzle()" class="bg-brand-green hover:bg-emerald-600 text-white px-6 py-2.5 rounded-2xl font-black text-sm border-b-4 border-emerald-800 btn-bounce shadow-md">
+                            <i class="fa-solid fa-check mr-1"></i> Skontrolovať
+                        </button>
                     </div>
                 </div>
 
-                <!-- Navigation Controls (Next/Prev/Random - NO Thumbnails grid to prevent copying) -->
+                <!-- Navigation Controls -->
                 <div id="navControls" class="w-full flex justify-between items-center mt-4 sm:mt-6 pt-4 border-t border-slate-100">
                     <button onclick="prevWord()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-base flex items-center gap-2 border-b-4 border-slate-300 btn-bounce">
                         <i class="fa-solid fa-arrow-left"></i> <span>Predchádzajúce</span>
@@ -249,22 +256,43 @@
             </div>
         </div>
 
-        <!-- ==================== TAB 3: "MOJE PÍSMENKÁ" SETTINGS VIEW ==================== -->
-        <div id="settingsView" class="hidden w-full max-w-4xl bg-white rounded-3xl border-4 border-slate-200 p-5 sm:p-8 shadow-2xl">
-            <div class="text-center mb-6">
-                <div class="inline-flex items-center justify-center w-12 h-12 bg-amber-100 text-brand-orange rounded-2xl text-2xl font-black mb-2 shadow-inner">
-                    <i class="fa-solid fa-sliders"></i>
+        <!-- ==================== "MOJE PÍSMENKÁ" & DATASET SETTINGS VIEW ==================== -->
+        <div id="settingsView" class="hidden w-full max-w-4xl bg-white rounded-3xl border-4 border-slate-200 p-5 sm:p-8 shadow-2xl flex flex-col gap-6">
+            
+            <!-- Student Profile Switcher -->
+            <div class="bg-amber-50 rounded-2xl p-4 border-2 border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-brand-orange text-white rounded-2xl flex items-center justify-center text-xl font-black shadow">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-base sm:text-lg">Profil žiaka / Používateľa</h3>
+                        <p class="text-xs text-slate-500 font-bold">Každý žiak má vlastný zoznam poznaných písmeniek</p>
+                    </div>
                 </div>
-                <h2 class="text-2xl sm:text-3xl font-black text-slate-800">Moje poznané písmenká</h2>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <select id="profileSelect" onchange="changeProfile(this.value)" class="bg-white border-2 border-amber-300 text-slate-800 font-bold text-sm rounded-xl px-3 py-2 outline-none focus:border-brand-orange flex-grow sm:flex-grow-0">
+                        <!-- Dynamic profile options -->
+                    </select>
+                    <button onclick="createNewProfile()" class="bg-brand-green text-white px-3 py-2 rounded-xl font-bold text-sm border-b-2 border-emerald-800 btn-bounce shadow" title="Pridať nového žiaka">
+                        <i class="fa-solid fa-plus"></i> Nový
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alphabet Header -->
+            <div class="text-center">
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-800">Poznané písmenká</h2>
                 <p class="text-xs sm:text-sm font-bold text-slate-500 mt-1">
-                    Vyber písmenká, ktoré dieťa už ovláda. Hry budú generovať iba slová pozostávajúce z týchto písmen.
+                    Vyber písmenká, ktoré dieťa už pozná. Zložená spájka <strong class="text-brand-purple">CH</strong> je podporovaná ako samostatné písmenko.
                 </p>
             </div>
 
             <!-- Quick Action Preset Buttons -->
-            <div class="flex flex-wrap justify-center gap-2 mb-6">
+            <div class="flex flex-wrap justify-center gap-2">
                 <button onclick="presetBasicLetters()" class="bg-brand-blue text-white px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-b-4 border-blue-800 btn-bounce shadow">
-                    <i class="fa-solid fa-star mr-1"></i>Základné prvácke (A, E, I, O, U, M, P, S, L, V, T)
+                    <i class="fa-solid fa-star mr-1"></i>Základné prvácke (A, E, I, O, U, M, P, S, L, V, T, CH...)
                 </button>
                 <button onclick="selectAllLetters(true)" class="bg-brand-green text-white px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-b-4 border-emerald-800 btn-bounce shadow">
                     <i class="fa-solid fa-check-double mr-1"></i>Označiť všetky
@@ -275,12 +303,41 @@
             </div>
 
             <!-- Full Alphabet Grid -->
-            <div id="alphabetGrid" class="grid grid-cols-4 sm:grid-cols-7 md:grid-cols-9 gap-2 sm:gap-3 my-4">
+            <div id="alphabetGrid" class="grid grid-cols-4 sm:grid-cols-7 md:grid-cols-9 gap-2 sm:gap-3 my-2">
                 <!-- Dynamically populated alphabet tiles -->
             </div>
 
-            <!-- Info Bar & Save Confirmation -->
-            <div class="mt-8 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <!-- Dataset Manager Section -->
+            <div class="bg-slate-50 rounded-2xl p-4 border-2 border-slate-200 mt-2">
+                <div class="flex items-center justify-between cursor-pointer" onclick="toggleDatasetTools()">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-database text-brand-purple text-lg"></i>
+                        <h4 class="font-black text-slate-800 text-sm sm:text-base">Správa datasetu (vlastné obrázky a slová)</h4>
+                    </div>
+                    <i id="datasetChevron" class="fa-solid fa-chevron-down text-slate-400"></i>
+                </div>
+
+                <div id="datasetToolsContent" class="hidden mt-4 pt-4 border-t border-slate-200 flex flex-col gap-3">
+                    <p class="text-xs font-bold text-slate-500">
+                        Môžeš si stiahnuť aktuálny zoznam slov vo formate JSON, pridať vlastné obrázky (URL alebo lokálne cesty <code class="bg-white px-1 py-0.5 rounded border border-slate-300">assets/images/obrazok.jpg</code>) a nahrať ho späť.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="exportDatasetJSON()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl font-bold text-xs btn-bounce">
+                            <i class="fa-solid fa-download mr-1"></i> Stiahnuť dataset (JSON)
+                        </button>
+                        <label class="bg-brand-purple hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-bold text-xs btn-bounce cursor-pointer">
+                            <i class="fa-solid fa-upload mr-1"></i> Nahrať vlastný dataset (JSON)
+                            <input type="file" id="datasetFileInput" accept=".json" class="hidden" onchange="importDatasetJSON(event)">
+                        </label>
+                        <button onclick="resetDefaultDataset()" class="bg-rose-100 hover:bg-rose-200 text-rose-800 px-4 py-2 rounded-xl font-bold text-xs btn-bounce">
+                            <i class="fa-solid fa-rotate-left mr-1"></i> Obnoviť pôvodný dataset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Action Bar -->
+            <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="text-xs font-bold text-slate-500 flex items-center gap-2">
                     <i class="fa-solid fa-circle-info text-brand-blue text-base"></i>
                     <span>Označených písmeniek: <strong id="selectedLettersCount" class="text-brand-purple text-sm">0</strong></span>
@@ -293,22 +350,40 @@
 
     </main>
 
-    <footer class="w-full bg-white border-t border-slate-200 py-3 px-4 text-center text-xs font-bold text-slate-400 mt-6">
-        <p>Sklabikár Pre Prvákov • Prispôsobivá výučba pre PC, Tablety, Mobily a Interaktívne Tabule</p>
+    <!-- Footer with Contact Info -->
+    <footer class="w-full bg-white border-t border-slate-200 py-4 px-4 text-center text-xs font-bold text-slate-500 mt-6 shadow-inner">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p><strong>Sklableikár</strong> • Prispôsobivá výučba čítania a písania pre prvákov ZŠ</p>
+            <div class="flex items-center gap-4">
+                <a href="mailto:kontakt@sklabikar.sk" class="text-brand-blue hover:underline flex items-center gap-1">
+                    <i class="fa-solid fa-envelope"></i> Kontakt / Podpora
+                </a>
+                <span>•</span>
+                <span class="text-slate-400">Verzia 2.1</span>
+            </div>
+        </div>
     </footer>
 
     <script>
-        // Full Slovak alphabet including accented characters
+        // Requested Exact Alphabet
         const ALL_SLOVAK_LETTERS = [
             'A', 'Á', 'Ä', 'B', 'C', 'Č', 'D', 'Ď', 'E', 'É', 'F', 'G', 'H', 'CH',
-            'I', 'Í', 'J', 'K', 'L', 'Ĺ', 'Ľ', 'M', 'N', 'Ň', 'O', 'Ó', 'Ô', 'P','Q',
-            'R','Ŕ', 'S', 'Š', 'T', 'Ť', 'U', 'Ú', 'V', 'W', 'X', 'Y', 'Ý', 'Z', 'Ž'
+            'I', 'Í', 'J', 'K', 'L', 'Ĺ', 'Ľ', 'M', 'N', 'Ň', 'O', 'Ó', 'Ô', 'P', 'Q',
+            'R', 'Ŕ', 'S', 'Š', 'T', 'Ť', 'U', 'Ú', 'V', 'W', 'X', 'Y', 'Ý', 'Z', 'Ž'
         ];
 
-        const BASIC_FIRST_GRADE_PRESET = ['A', 'E', 'I', 'O', 'U', 'M', 'P', 'S', 'L', 'V', 'T', 'J', 'R', 'D', 'K', 'B', 'C'];
+        const BASIC_FIRST_GRADE_PRESET = ['A', 'E', 'I', 'O', 'U', 'M', 'P', 'S', 'L', 'V', 'T', 'J', 'R', 'D', 'K', 'B', 'C', 'CH'];
 
-        // Word database with categorized entries and clean SVG illustrations
-        const WORD_DATABASE = [
+        // Default Word Dataset
+        const DEFAULT_WORD_DATABASE = [
+            {
+                id: 'chata',
+                word: 'CHATA',
+                category: 'objects',
+                categoryLabel: 'Veci',
+                color: '#FF9F1C',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><polygon points="50,15 10,50 90,50" fill="#B45309"/><rect x="20" y="50" width="60" height="38" fill="#D97706"/><rect x="42" y="62" width="16" height="26" fill="#78350F"/><rect x="30" y="58" width="8" height="10" fill="#FEF08A"/><rect x="62" y="58" width="8" height="10" fill="#FEF08A"/></svg>`
+            },
             {
                 id: 'pes',
                 word: 'PES',
@@ -431,17 +506,39 @@
             }
         ];
 
-        // Application State
+        let wordDatabase = [...DEFAULT_WORD_DATABASE];
+
+        // State Management
+        let profiles = {};
+        let activeProfileId = 'ziak_1';
+
         let knownLetters = new Set();
         let currentFilter = 'all';
         let availableWords = [];
         let currentIndex = 0;
-        let currentMode = 'explorer'; // 'explorer' | 'puzzle' | 'settings'
+        let currentMode = 'explorer';
 
         let puzzleState = {
             placedLetters: [],
             scrambledTiles: []
         };
+
+        // Utility: Split Slovak words into letter tokens (handling "CH" digraph as single token)
+        function splitWordToTokens(word) {
+            const tokens = [];
+            let i = 0;
+            const upper = word.toUpperCase();
+            while (i < upper.length) {
+                if (upper.substring(i, i + 2) === 'CH') {
+                    tokens.push('CH');
+                    i += 2;
+                } else {
+                    tokens.push(upper[i]);
+                    i++;
+                }
+            }
+            return tokens;
+        }
 
         // Audio System Architecture
         class AudioManager {
@@ -470,6 +567,30 @@
                 audio.play().catch(() => {
                     this.fallbackSpeechSynthesis(text, isLetter);
                 });
+            }
+
+            speakWrongAttempt(incorrectWord) {
+                if (!this.synth) return;
+                this.synth.cancel();
+
+                // 1. Speak the wrongly created pseudo-word
+                const wrongUtterance = new SpeechSynthesisUtterance(incorrectWord.toLowerCase());
+                if (this.slovakVoice) wrongUtterance.voice = this.slovakVoice;
+                wrongUtterance.lang = 'sk-SK';
+                wrongUtterance.rate = 0.75;
+
+                // 2. Follow up with encouraging Slovak message
+                wrongUtterance.onend = () => {
+                    setTimeout(() => {
+                        const encourageUtterance = new SpeechSynthesisUtterance("Skús to znova!");
+                        if (this.slovakVoice) encourageUtterance.voice = this.slovakVoice;
+                        encourageUtterance.lang = 'sk-SK';
+                        encourageUtterance.rate = 0.9;
+                        this.synth.speak(encourageUtterance);
+                    }, 250);
+                };
+
+                this.synth.speak(wrongUtterance);
             }
 
             fallbackSpeechSynthesis(text, isLetter) {
@@ -529,41 +650,156 @@
 
         // Initialization
         window.addEventListener('DOMContentLoaded', () => {
-            loadSavedLetters();
+            loadDatasetFromStorage();
+            loadProfilesFromStorage();
             renderSettingsGrid();
             filterAvailableWords();
             loadCurrentWord();
         });
 
-        // Local Storage handling
-        function loadSavedLetters() {
-            const saved = localStorage.getItem('sklabikar_known_letters');
+        // Profiles Management
+        function loadProfilesFromStorage() {
+            const saved = localStorage.getItem('sklabikar_profiles');
+            const savedActive = localStorage.getItem('sklabikar_active_profile');
+
             if (saved) {
                 try {
-                    knownLetters = new Set(JSON.parse(saved));
+                    profiles = JSON.parse(saved);
                 } catch(e) {
-                    knownLetters = new Set(BASIC_FIRST_GRADE_PRESET);
+                    profiles = { 'ziak_1': { name: 'Žiak 1', letters: BASIC_FIRST_GRADE_PRESET } };
                 }
             } else {
-                knownLetters = new Set(BASIC_FIRST_GRADE_PRESET);
+                profiles = { 'ziak_1': { name: 'Žiak 1', letters: BASIC_FIRST_GRADE_PRESET } };
+            }
+
+            activeProfileId = (savedActive && profiles[savedActive]) ? savedActive : Object.keys(profiles)[0];
+            knownLetters = new Set(profiles[activeProfileId].letters || BASIC_FIRST_GRADE_PRESET);
+            renderProfileSelector();
+        }
+
+        function saveProfilesToStorage() {
+            if (profiles[activeProfileId]) {
+                profiles[activeProfileId].letters = Array.from(knownLetters);
+            }
+            localStorage.setItem('sklabikar_profiles', JSON.stringify(profiles));
+            localStorage.setItem('sklabikar_active_profile', activeProfileId);
+            
+            const name = profiles[activeProfileId] ? profiles[activeProfileId].name : '';
+            document.getElementById('activeProfileBadgeName').innerText = name;
+        }
+
+        function renderProfileSelector() {
+            const select = document.getElementById('profileSelect');
+            select.innerHTML = '';
+            Object.keys(profiles).forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = profiles[id].name;
+                if (id === activeProfileId) opt.selected = true;
+                select.appendChild(opt);
+            });
+            document.getElementById('activeProfileBadgeName').innerText = profiles[activeProfileId].name;
+        }
+
+        function changeProfile(newId) {
+            if (profiles[newId]) {
+                saveProfilesToStorage();
+                activeProfileId = newId;
+                knownLetters = new Set(profiles[activeProfileId].letters || []);
+                renderProfileSelector();
+                renderSettingsGrid();
+                filterAvailableWords();
+                loadCurrentWord();
             }
         }
 
-        function saveLettersToStorage() {
-            localStorage.setItem('sklabikar_known_letters', JSON.stringify(Array.from(knownLetters)));
+        function createNewProfile() {
+            const name = prompt("Zadaj meno nového žiaka / profilu:", "Žiak " + (Object.keys(profiles).length + 1));
+            if (name && name.trim()) {
+                const newId = 'ziak_' + Date.now();
+                profiles[newId] = {
+                    name: name.trim(),
+                    letters: BASIC_FIRST_GRADE_PRESET
+                };
+                changeProfile(newId);
+            }
         }
 
-        // Filter words strictly to those containing ONLY selected letters
+        // Custom Dataset Import / Export / Storage
+        function loadDatasetFromStorage() {
+            const saved = localStorage.getItem('sklabikar_custom_dataset');
+            if (saved) {
+                try {
+                    wordDatabase = JSON.parse(saved);
+                } catch(e) {
+                    wordDatabase = [...DEFAULT_WORD_DATABASE];
+                }
+            } else {
+                wordDatabase = [...DEFAULT_WORD_DATABASE];
+            }
+        }
+
+        function toggleDatasetTools() {
+            const content = document.getElementById('datasetToolsContent');
+            const chevron = document.getElementById('datasetChevron');
+            content.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        }
+
+        function exportDatasetJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(wordDatabase, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "sklabikar_dataset.json");
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+        }
+
+        function importDatasetJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        wordDatabase = imported;
+                        localStorage.setItem('sklabikar_custom_dataset', JSON.stringify(wordDatabase));
+                        alert('Dataset bol úspešne načítaný!');
+                        filterAvailableWords();
+                        loadCurrentWord();
+                    } else {
+                        alert('Chyba: Súbor musí obsahovať zoznam slov vo formáte JSON.');
+                    }
+                } catch(err) {
+                    alert('Chyba pri čítaní JSON súboru.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function resetDefaultDataset() {
+            if (confirm("Naozaj chceš obnoviť pôvodný dataset slov?")) {
+                wordDatabase = [...DEFAULT_WORD_DATABASE];
+                localStorage.removeItem('sklabikar_custom_dataset');
+                filterAvailableWords();
+                loadCurrentWord();
+                alert('Dataset bol obnovený.');
+            }
+        }
+
+        // Filter words strictly to those containing ONLY selected letters for the active profile
         function filterAvailableWords() {
-            availableWords = WORD_DATABASE.filter(item => {
-                // Check category filter
+            availableWords = wordDatabase.filter(item => {
                 if (currentFilter !== 'all' && item.category !== currentFilter) {
                     return false;
                 }
                 
-                // Strict letter check: Every letter in the word MUST be in knownLetters
-                const chars = item.word.split('');
-                return chars.every(char => knownLetters.has(char));
+                // Split into letter tokens (handling 'CH' as single token)
+                const tokens = splitWordToTokens(item.word);
+                return tokens.every(char => knownLetters.has(char));
             });
 
             if (currentIndex >= availableWords.length) {
@@ -581,7 +817,6 @@
             const poolContainer = document.getElementById('scrambledPoolContainer');
             const instr = document.getElementById('instructionText');
 
-            // Reset tab styles
             [expBtn, puzBtn, setBtn].forEach(b => {
                 b.className = "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all text-slate-600 hover:text-slate-800";
             });
@@ -650,8 +885,18 @@
 
             categoryBadge.innerHTML = `<i class="fa-solid fa-tag"></i> ${wordObj.categoryLabel}`;
             wordCounter.innerText = `Slovo ${currentIndex + 1} / ${availableWords.length}`;
-            document.getElementById('svgIllustration').innerHTML = wordObj.svg;
-            document.getElementById('imageContainer').style.borderColor = wordObj.color;
+            
+            // Illustration rendering (supports SVG string, local image path or external URL)
+            const box = document.getElementById('illustrationBox');
+            if (wordObj.svg) {
+                box.innerHTML = wordObj.svg;
+            } else if (wordObj.image) {
+                box.innerHTML = `<img src="${wordObj.image}" alt="${wordObj.word}" class="max-w-full max-h-full object-contain rounded-2xl" onerror="this.onerror=null; this.src='https://placehold.co/200x200/FFD166/1E293B?text=${wordObj.word}';">`;
+            } else {
+                box.innerHTML = `<div class="text-4xl font-black text-brand-purple">${wordObj.word}</div>`;
+            }
+
+            document.getElementById('imageContainer').style.borderColor = wordObj.color || '#FFD166';
 
             if (currentMode === 'explorer') {
                 renderExplorerMode(wordObj);
@@ -669,21 +914,22 @@
             const wordDisplay = document.getElementById('wordDisplay');
             wordDisplay.innerHTML = '';
 
-            const letters = wordObj.word.split('');
+            const tokens = splitWordToTokens(wordObj.word);
             const cardColors = ['#EF476F', '#FF9F1C', '#FFD166', '#06D6A0', '#118AB2', '#8338EC'];
 
-            letters.forEach((char, idx) => {
+            tokens.forEach((token, idx) => {
                 const color = cardColors[idx % cardColors.length];
                 const card = document.createElement('button');
-                card.className = `letter-card w-12 h-16 sm:w-20 sm:h-24 bg-white rounded-2xl border-4 text-2xl sm:text-5xl font-black flex items-center justify-center cursor-pointer btn-bounce shadow-lg`;
+                const isDouble = token.length > 1; // e.g. 'CH'
+                card.className = `letter-card ${isDouble ? 'w-16 sm:w-28' : 'w-12 sm:w-20'} h-16 sm:h-24 bg-white rounded-2xl border-4 text-2xl sm:text-5xl font-black flex items-center justify-center cursor-pointer btn-bounce shadow-lg`;
                 card.style.borderColor = color;
                 card.style.color = color;
-                card.innerText = char;
+                card.innerText = token;
 
                 card.onclick = () => {
                     card.classList.add('animate-wiggle');
                     setTimeout(() => card.classList.remove('animate-wiggle'), 400);
-                    audioMgr.speakText(char, true);
+                    audioMgr.speakText(token, true);
                 };
 
                 wordDisplay.appendChild(card);
@@ -692,19 +938,18 @@
 
         // Puzzle mode setup & Universal Drag/Drop + Tap mechanics
         function setupPuzzleMode(wordObj) {
-            const targetLetters = wordObj.word.split('');
-            puzzleState.placedLetters = new Array(targetLetters.length).fill(null);
+            const targetTokens = splitWordToTokens(wordObj.word);
+            puzzleState.placedLetters = new Array(targetTokens.length).fill(null);
 
-            // Scramble letters
-            let scrambled = [...targetLetters];
+            let scrambled = [...targetTokens];
             for (let i = scrambled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [scrambled[i], scrambled[j]] = [scrambled[j], scrambled[i]];
             }
 
-            puzzleState.scrambledTiles = scrambled.map((char, id) => ({
-                id: `tile-${char}-${id}-${Math.random()}`,
-                char: char,
+            puzzleState.scrambledTiles = scrambled.map((token, id) => ({
+                id: `tile-${token}-${id}-${Math.random()}`,
+                char: token,
                 placed: false
             }));
 
@@ -717,15 +962,15 @@
             wordDisplay.innerHTML = '';
 
             puzzleState.placedLetters.forEach((placed, slotIdx) => {
+                const isDouble = placed && placed.char.length > 1;
                 const slot = document.createElement('div');
                 slot.dataset.slotIndex = slotIdx;
-                slot.className = `slot-box w-12 h-16 sm:w-20 sm:h-24 rounded-2xl border-4 border-dashed ${placed ? 'border-brand-blue bg-blue-50' : 'border-slate-300 bg-slate-100'} flex items-center justify-center text-2xl sm:text-5xl font-black transition-all relative`;
+                slot.className = `slot-box ${isDouble ? 'w-16 sm:w-28' : 'w-12 sm:w-20'} h-16 sm:h-24 rounded-2xl border-4 border-dashed ${placed ? 'border-brand-blue bg-blue-50' : 'border-slate-300 bg-slate-100'} flex items-center justify-center text-2xl sm:text-5xl font-black transition-all relative`;
 
                 if (placed) {
                     slot.innerText = placed.char;
                     slot.style.color = '#118AB2';
                     slot.classList.add('cursor-pointer', 'bg-white', 'border-solid', 'shadow-md');
-                    // Tap to remove
                     slot.onclick = () => removeLetterFromSlot(slotIdx);
                 } else {
                     slot.innerText = '';
@@ -741,20 +986,19 @@
 
             puzzleState.scrambledTiles.forEach((tile) => {
                 if (!tile.placed) {
+                    const isDouble = tile.char.length > 1;
                     const card = document.createElement('div');
                     card.id = tile.id;
-                    card.className = `letter-card w-12 h-16 sm:w-16 sm:h-20 bg-amber-400 text-white rounded-2xl border-b-4 border-amber-600 text-2xl sm:text-4xl font-black flex items-center justify-center cursor-pointer btn-bounce shadow-md select-none`;
+                    card.className = `letter-card ${isDouble ? 'w-16 sm:w-24' : 'w-12 sm:w-16'} h-16 sm:h-20 bg-amber-400 text-white rounded-2xl border-b-4 border-amber-600 text-2xl sm:text-4xl font-black flex items-center justify-center cursor-pointer btn-bounce shadow-md select-none`;
                     card.innerText = tile.char;
 
-                    // Support both click/tap to place AND drag & drop
                     makeElementDraggable(card, tile);
-
                     letterPool.appendChild(card);
                 }
             });
         }
 
-        // Universal Pointer-Events Drag & Drop (Mouse, Touch, Stylus, SmartBoard)
+        // Pointer-Events Drag & Drop (Mouse, Touch, Stylus, SmartBoard)
         function makeElementDraggable(element, tileData) {
             let startX = 0, startY = 0;
             let isDragging = false;
@@ -774,7 +1018,6 @@
                 const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
                 if (dist > 8 && !isDragging) {
                     isDragging = true;
-                    // Create visual dragging ghost tile
                     ghost = element.cloneNode(true);
                     ghost.classList.add('drag-ghost');
                     document.body.appendChild(ghost);
@@ -784,8 +1027,6 @@
                 if (isDragging && ghost) {
                     ghost.style.left = `${e.clientX}px`;
                     ghost.style.top = `${e.clientY}px`;
-
-                    // Highlight hovered slot
                     highlightSlotAtPosition(e.clientX, e.clientY);
                 }
             };
@@ -801,13 +1042,11 @@
                     if (ghost) ghost.remove();
                     element.style.opacity = '1';
 
-                    // Drop check
                     const droppedSlot = getSlotAtPosition(e.clientX, e.clientY);
                     if (droppedSlot !== null) {
                         placeTileInSpecificSlot(tileData, droppedSlot);
                     }
                 } else {
-                    // It was a TAP / CLICK: Automatically place in first available slot
                     placeLetterInSlot(tileData);
                 }
             };
@@ -847,7 +1086,6 @@
         }
 
         function placeTileInSpecificSlot(tile, slotIdx) {
-            // If slot is occupied, displace existing tile back to pool
             if (puzzleState.placedLetters[slotIdx]) {
                 puzzleState.placedLetters[slotIdx].placed = false;
             }
@@ -858,7 +1096,11 @@
             
             renderPuzzleSlots();
             renderPuzzlePool();
-            checkPuzzleCompletion();
+            
+            // Auto check if all slots filled
+            if (puzzleState.placedLetters.every(item => item !== null)) {
+                checkPuzzleCompletion();
+            }
         }
 
         function removeLetterFromSlot(slotIdx) {
@@ -872,20 +1114,27 @@
             }
         }
 
-        function checkPuzzleCompletion() {
+        function manualCheckPuzzle() {
             const isFull = puzzleState.placedLetters.every(item => item !== null);
-            if (!isFull) return;
+            if (!isFull) {
+                audioMgr.playEffect('wrong');
+                alert("Najprv dopln všetky políčka!");
+                return;
+            }
+            checkPuzzleCompletion();
+        }
 
+        function checkPuzzleCompletion() {
             const wordObj = getCurrentWordObj();
             if (!wordObj) return;
 
-            const currentWord = wordObj.word;
+            const targetWord = wordObj.word.toUpperCase();
             const formedWord = puzzleState.placedLetters.map(item => item.char).join('');
 
-            if (formedWord === currentWord) {
-                // Success celebration!
+            if (formedWord === targetWord) {
+                // Correct answer celebration
                 audioMgr.playEffect('correct');
-                setTimeout(() => audioMgr.speakText(currentWord, false), 300);
+                setTimeout(() => audioMgr.speakText(targetWord, false), 300);
 
                 if (typeof confetti === 'function') {
                     confetti({
@@ -900,11 +1149,14 @@
                 setTimeout(() => wordDisplay.classList.remove('pulse-success'), 2000);
 
             } else {
-                // Incorrect order feedback
+                // Incorrect answer: Speak the wrongly created word out loud!
                 audioMgr.playEffect('wrong');
                 const wordDisplay = document.getElementById('wordDisplay');
                 wordDisplay.classList.add('animate-wiggle');
                 setTimeout(() => wordDisplay.classList.remove('animate-wiggle'), 500);
+
+                // Speak misspelled word
+                audioMgr.speakWrongAttempt(formedWord);
             }
         }
 
@@ -915,8 +1167,9 @@
 
             ALL_SLOVAK_LETTERS.forEach(letter => {
                 const isSelected = knownLetters.has(letter);
+                const isDouble = letter.length > 1; // 'CH'
                 const tile = document.createElement('button');
-                tile.className = `p-2.5 sm:p-3 rounded-2xl text-lg sm:text-2xl font-black transition-all btn-bounce border-b-4 ${
+                tile.className = `p-2.5 sm:p-3 rounded-2xl ${isDouble ? 'text-base sm:text-xl font-black' : 'text-lg sm:text-2xl font-black'} transition-all btn-bounce border-b-4 ${
                     isSelected 
                         ? 'bg-brand-green text-white border-emerald-700 shadow-md scale-105' 
                         : 'bg-slate-100 text-slate-400 border-slate-300 hover:bg-slate-200'
@@ -930,7 +1183,7 @@
                         knownLetters.add(letter);
                         audioMgr.speakText(letter, true);
                     }
-                    saveLettersToStorage();
+                    saveProfilesToStorage();
                     renderSettingsGrid();
                     updateSelectedCount();
                 };
@@ -951,19 +1204,20 @@
             } else {
                 knownLetters.clear();
             }
-            saveLettersToStorage();
+            saveProfilesToStorage();
             renderSettingsGrid();
             audioMgr.playEffect('click');
         }
 
         function presetBasicLetters() {
             knownLetters = new Set(BASIC_FIRST_GRADE_PRESET);
-            saveLettersToStorage();
+            saveProfilesToStorage();
             renderSettingsGrid();
             audioMgr.playEffect('click');
         }
 
         function saveAndStartGame() {
+            saveProfilesToStorage();
             filterAvailableWords();
             switchMode('explorer');
         }
