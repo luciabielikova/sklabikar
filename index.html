@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Slabikár - Veselé Písmenká pre Prvákov</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            yellow: '#FFD166',
+                            green: '#06D6A0',
+                            blue: '#118AB2',
+                            pink: '#EF476F',
+                            purple: '#8338EC',
+                            orange: '#FF9F1C'
+                        }
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background-color: #F7F9FC;
+            background-image: radial-gradient(#FFD166 1.5px, transparent 1.5px), radial-gradient(#118AB2 1.5px, #F7F9FC 1.5px);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .letter-card {
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+            touch-action: none; /* Crucial for custom touch/pointer dragging */
+        }
+
+        .letter-card:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 10px 0 rgba(0, 0, 0, 0.12);
+        }
+
+        .letter-card:active, .letter-card.dragging {
+            transform: translateY(2px) scale(1.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+            z-index: 1000 !important;
+        }
+
+        .btn-bounce {
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-bounce:hover {
+            transform: scale(1.06);
+        }
+        .btn-bounce:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-6deg) scale(1.03); }
+            75% { transform: rotate(6deg) scale(1.03); }
+        }
+        .animate-wiggle {
+            animation: wiggle 0.4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(6, 214, 160, 0.6); }
+            50% { box-shadow: 0 0 35px rgba(6, 214, 160, 0.95); }
+        }
+        .pulse-success {
+            animation: pulse-glow 1.2s infinite;
+        }
+
+        .slot-box {
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.12);
+            transition: all 0.2s ease;
+        }
+        .slot-box.drag-over {
+            border-color: #06D6A0 !important;
+            background-color: #E6FFFA !important;
+            transform: scale(1.08);
+        }
+
+        /* Dragging ghost overlay */
+        .drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.9;
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            transition: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Header Navigation -->
+    <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-brand-yellow sticky top-0 z-40 px-3 sm:px-6 py-2.5 shadow-md">
+        <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+            
+            <!-- Logo -->
+            <div class="flex items-center gap-2 sm:gap-3 cursor-pointer" onclick="switchMode('explorer')">
+                <div class="bg-brand-pink text-white w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-black shadow-lg transform -rotate-3">
+                    A
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-3xl font-black text-brand-purple tracking-wide leading-none">
+                        SLABIKÁR<span class="text-brand-pink">.sk</span>
+                    </h1>
+                    <p class="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Učíme sa písmenká</p>
+                </div>
+            </div>
+
+            <!-- Main Mode Switches -->
+            <div class="flex items-center bg-slate-100 p-1 sm:p-1.5 rounded-2xl border-2 border-slate-200 gap-1">
+                <button id="modeExplorerBtn" onclick="switchMode('explorer')" class="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all bg-brand-blue text-white shadow-md">
+                    <i class="fa-solid fa-magnifying-glass mr-1"></i>Prieskumník
+                </button>
+                <button id="modePuzzleBtn" onclick="switchMode('puzzle')" class="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all text-slate-600 hover:text-slate-800">
+                    <i class="fa-solid fa-puzzle-piece mr-1"></i>Skladačka
+                </button>
+                <button id="modeSettingsBtn" onclick="switchMode('settings')" class="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all text-slate-600 hover:text-slate-800 bg-amber-100/60 text-amber-900 border border-amber-300">
+                    <i class="fa-solid fa-sliders text-brand-orange mr-1"></i>Moje písmenká
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-5xl w-full mx-auto p-3 sm:p-6 flex-grow flex flex-col justify-center items-center">
+
+        <!-- ==================== TAB 1 & 2: GAME VIEWS (Explorer & Puzzle) ==================== -->
+        <div id="gameView" class="w-full flex flex-col items-center">
+
+            <!-- Category Selector Filters -->
+            <div id="categoryFilters" class="flex flex-wrap justify-center gap-1.5 sm:gap-3 mb-4 sm:mb-6">
+                <button onclick="filterCategory('all')" id="cat-all" class="cat-pill bg-brand-purple text-white px-4 sm:px-5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs sm:text-base border-b-4 border-purple-800 btn-bounce shadow-md">
+                    <i class="fa-solid fa-shapes mr-1"></i>Všetky slová
+                </button>
+                <button onclick="filterCategory('animals')" id="cat-animals" class="cat-pill bg-white text-slate-700 px-4 sm:px-5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs sm:text-base border-b-4 border-slate-200 btn-bounce hover:bg-slate-50">
+                    <i class="fa-solid fa-paw text-brand-orange mr-1"></i>Zvieratká
+                </button>
+                <button onclick="filterCategory('nature')" id="cat-nature" class="cat-pill bg-white text-slate-700 px-4 sm:px-5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs sm:text-base border-b-4 border-slate-200 btn-bounce hover:bg-slate-50">
+                    <i class="fa-solid fa-tree text-brand-green mr-1"></i>Príroda
+                </button>
+                <button onclick="filterCategory('objects')" id="cat-objects" class="cat-pill bg-white text-slate-700 px-4 sm:px-5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs sm:text-base border-b-4 border-slate-200 btn-bounce hover:bg-slate-50">
+                    <i class="fa-solid fa-car text-brand-blue mr-1"></i>Veci
+                </button>
+            </div>
+
+            <!-- Active Game Card -->
+            <div class="w-full bg-white rounded-3xl border-4 border-slate-200 p-4 sm:p-8 shadow-2xl relative flex flex-col items-center min-h-[440px] justify-between">
+                
+                <!-- Category Badge & Counter -->
+                <div class="w-full flex justify-between items-center mb-2 sm:mb-4">
+                    <span id="categoryBadge" class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-tag"></i> Zvieratká
+                    </span>
+                    <span id="wordCounter" class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-bold text-xs sm:text-sm">
+                        Dostupné slová: 0
+                    </span>
+                </div>
+
+                <!-- Empty State Message (When no words match known letters) -->
+                <div id="noWordsView" class="hidden my-auto py-8 text-center flex flex-col items-center max-w-md">
+                    <div class="w-20 h-20 bg-amber-100 text-brand-orange rounded-full flex items-center justify-center text-4xl mb-4 shadow-inner">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-black text-slate-800 mb-2">Žiadne dostupné slová</h3>
+                    <p class="text-sm sm:text-base font-bold text-slate-500 mb-6">
+                        Pre zvolené písmenká sme nenašli žiadne slovo. Skús v nastaveniach označiť viac písmeniek, ktoré už poznáš!
+                    </p>
+                    <button onclick="switchMode('settings')" class="bg-brand-orange text-white px-6 py-3 rounded-2xl font-black text-base border-b-4 border-amber-700 btn-bounce shadow-lg">
+                        <i class="fa-solid fa-sliders mr-2"></i>Otvoriť "Moje písmenká"
+                    </button>
+                </div>
+
+                <!-- Word Display Container -->
+                <div id="wordArea" class="w-full flex flex-col items-center my-auto">
+                    
+                    <!-- Image Illustration Box -->
+                    <div class="relative group my-2">
+                        <div id="imageContainer" class="w-40 h-40 sm:w-56 sm:h-56 bg-gradient-to-br from-blue-50 to-amber-50 rounded-3xl border-4 border-brand-yellow p-4 flex items-center justify-center shadow-inner overflow-hidden transition-transform duration-300">
+                            <div id="svgIllustration" class="w-full h-full flex items-center justify-center">
+                                <!-- SVG loaded dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Read Word Button -->
+                        <button onclick="playFullWordAudio()" class="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 bg-brand-green hover:bg-emerald-500 text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full border-4 border-white flex items-center justify-center shadow-lg btn-bounce cursor-pointer group" title="Prečítaj celé slovo">
+                            <i class="fa-solid fa-volume-high text-xl sm:text-2xl group-hover:scale-110 transition-transform"></i>
+                        </button>
+                    </div>
+
+                    <p id="instructionText" class="mt-3 sm:mt-4 text-slate-500 font-bold text-center text-xs sm:text-base">
+                        Klikni na písmenko a vypočuj si jeho hlásku!
+                    </p>
+
+                    <!-- Slots or Card Letters Container -->
+                    <div id="wordDisplay" class="flex flex-wrap justify-center gap-2 sm:gap-4 my-4 sm:my-6 min-h-[70px]">
+                        <!-- Dynamic letter cards or target slots -->
+                    </div>
+
+                    <!-- Scrambled Letter Bank for Puzzle Mode -->
+                    <div id="scrambledPoolContainer" class="hidden w-full mt-2 pt-4 border-t-2 border-dashed border-slate-200">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider text-center mb-3">
+                            Dostupné písmenká (klikni alebo pretiahni):
+                        </p>
+                        <div id="letterPool" class="flex flex-wrap justify-center gap-2 sm:gap-3 min-h-[64px]">
+                            <!-- Scrambled tiles -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Controls (Next/Prev/Random - NO Thumbnails grid to prevent copying) -->
+                <div id="navControls" class="w-full flex justify-between items-center mt-4 sm:mt-6 pt-4 border-t border-slate-100">
+                    <button onclick="prevWord()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-base flex items-center gap-2 border-b-4 border-slate-300 btn-bounce">
+                        <i class="fa-solid fa-arrow-left"></i> <span>Predchádzajúce</span>
+                    </button>
+                    
+                    <button onclick="randomWord()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-base flex items-center gap-2 border-b-4 border-amber-300 btn-bounce">
+                        <i class="fa-solid fa-dice text-lg"></i> <span class="hidden sm:inline">Náhodné</span>
+                    </button>
+
+                    <button onclick="nextWord()" class="bg-brand-pink hover:bg-rose-600 text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-base flex items-center gap-2 border-b-4 border-rose-800 btn-bounce shadow-md">
+                        <span>Ďalšie</span> <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== TAB 3: "MOJE PÍSMENKÁ" SETTINGS VIEW ==================== -->
+        <div id="settingsView" class="hidden w-full max-w-4xl bg-white rounded-3xl border-4 border-slate-200 p-5 sm:p-8 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-amber-100 text-brand-orange rounded-2xl text-2xl font-black mb-2 shadow-inner">
+                    <i class="fa-solid fa-sliders"></i>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-800">Moje poznané písmenká</h2>
+                <p class="text-xs sm:text-sm font-bold text-slate-500 mt-1">
+                    Vyber písmenká, ktoré dieťa už ovláda. Hry budú generovať iba slová pozostávajúce z týchto písmen.
+                </p>
+            </div>
+
+            <!-- Quick Action Preset Buttons -->
+            <div class="flex flex-wrap justify-center gap-2 mb-6">
+                <button onclick="presetBasicLetters()" class="bg-brand-blue text-white px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-b-4 border-blue-800 btn-bounce shadow">
+                    <i class="fa-solid fa-star mr-1"></i>Základné prvácke (A, E, I, O, U, M, P, S, L, V, T)
+                </button>
+                <button onclick="selectAllLetters(true)" class="bg-brand-green text-white px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-b-4 border-emerald-800 btn-bounce shadow">
+                    <i class="fa-solid fa-check-double mr-1"></i>Označiť všetky
+                </button>
+                <button onclick="selectAllLetters(false)" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-b-4 border-slate-300 btn-bounce">
+                    <i class="fa-solid fa-xmark mr-1"></i>Zrušiť všetky
+                </button>
+            </div>
+
+            <!-- Full Alphabet Grid -->
+            <div id="alphabetGrid" class="grid grid-cols-4 sm:grid-cols-7 md:grid-cols-9 gap-2 sm:gap-3 my-4">
+                <!-- Dynamically populated alphabet tiles -->
+            </div>
+
+            <!-- Info Bar & Save Confirmation -->
+            <div class="mt-8 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-xs font-bold text-slate-500 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-brand-blue text-base"></i>
+                    <span>Označených písmeniek: <strong id="selectedLettersCount" class="text-brand-purple text-sm">0</strong></span>
+                </div>
+                <button onclick="saveAndStartGame()" class="w-full sm:w-auto bg-brand-pink hover:bg-rose-600 text-white px-8 py-3 rounded-2xl font-black text-base border-b-4 border-rose-800 btn-bounce shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> Uložiť a hrať!
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="w-full bg-white border-t border-slate-200 py-3 px-4 text-center text-xs font-bold text-slate-400 mt-6">
+        <p>Slabikár Pre Prvákov • Prispôsobivá výučba pre PC, Tablety, Mobily a Interaktívne Tabule</p>
+    </footer>
+
+    <script>
+        // Full Slovak alphabet including accented characters
+        const ALL_SLOVAK_LETTERS = [
+            'A', 'Á', 'Ä', 'B', 'C', 'Č', 'D', 'Ď', 'E', 'É', 'F', 'G', 'H', 'CH',
+            'I', 'Í', 'J', 'K', 'L', 'Ľ', 'M', 'N', 'Ň', 'O', 'Ó', 'Ô', 'P', 'R',
+            'Ŕ', 'S', 'Š', 'T', 'Ť', 'U', 'Ú', 'V', 'Y', 'Ý', 'Z', 'Ž'
+        ];
+
+        const BASIC_FIRST_GRADE_PRESET = ['A', 'E', 'I', 'O', 'U', 'M', 'P', 'S', 'L', 'V', 'T', 'J', 'R', 'D', 'K', 'B', 'C'];
+
+        // Word database with categorized entries and clean SVG illustrations
+        const WORD_DATABASE = [
+            {
+                id: 'pes',
+                word: 'PES',
+                category: 'animals',
+                categoryLabel: 'Zvieratká',
+                color: '#FF9F1C',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 35 25 C 20 25 15 45 25 60 C 35 75 65 75 75 60 C 85 45 80 25 65 25 Z" fill="#D97706"/><circle cx="40" cy="45" r="5" fill="#1E293B"/><circle cx="60" cy="45" r="5" fill="#1E293B"/><ellipse cx="50" cy="55" rx="7" ry="5" fill="#1E293B"/><path d="M 20 30 Q 10 40 22 50 Z" fill="#B45309"/><path d="M 80 30 Q 90 40 78 50 Z" fill="#B45309"/><path d="M 45 62 Q 50 70 55 62 Z" fill="#EF476F"/></svg>`
+            },
+            {
+                id: 'les',
+                word: 'LES',
+                category: 'nature',
+                categoryLabel: 'Príroda',
+                color: '#06D6A0',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><polygon points="30,70 15,45 25,45 18,25 35,25 30,10 45,30 40,45 50,45 35,70" fill="#16A34A"/><polygon points="70,75 55,50 65,50 58,32 75,32 70,18 85,38 80,52 90,52 75,75" fill="#15803D"/><rect x="27" y="70" width="6" height="15" fill="#78350F"/><rect x="67" y="75" width="6" height="12" fill="#78350F"/></svg>`
+            },
+            {
+                id: 'osa',
+                word: 'OSA',
+                category: 'animals',
+                categoryLabel: 'Zvieratká',
+                color: '#FFD166',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="50" rx="18" ry="30" fill="#FACC15"/><path d="M 32 42 h 36 M 32 50 h 36 M 32 58 h 36" stroke="#1E293B" stroke-width="4"/><circle cx="50" cy="22" r="10" fill="#1E293B"/><circle cx="46" cy="20" r="2" fill="#FFF"/><circle cx="54" cy="20" r="2" fill="#FFF"/><path d="M 30 38 Q 10 20 30 25 M 70 38 Q 90 20 70 25" stroke="#38BDF8" stroke-width="3" fill="none"/></svg>`
+            },
+            {
+                id: 'misa',
+                word: 'MISA',
+                category: 'objects',
+                categoryLabel: 'Veci',
+                color: '#118AB2',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 15 35 C 20 75 80 75 85 35 Z" fill="#38BDF8"/><ellipse cx="50" cy="35" rx="35" ry="8" fill="#7DD3FC"/><circle cx="40" cy="50" r="4" fill="#F43F5E"/><circle cx="55" cy="55" r="5" fill="#FACC15"/><circle cx="62" cy="48" r="4" fill="#4ADE80"/></svg>`
+            },
+            {
+                id: 'mama',
+                word: 'MAMA',
+                category: 'objects',
+                categoryLabel: 'Veci',
+                color: '#EF476F',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 50 25 C 20 -5 0 35 50 85 C 100 35 80 -5 50 25 Z" fill="#EF476F"/></svg>`
+            },
+            {
+                id: 'dom',
+                word: 'DOM',
+                category: 'objects',
+                categoryLabel: 'Veci',
+                color: '#EF476F',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><polygon points="50,15 15,45 85,45" fill="#EF476F"/><rect x="25" y="45" width="50" height="42" fill="#FDE047"/><rect x="42" y="62" width="16" height="25" fill="#B45309"/><rect x="32" y="52" width="12" height="12" fill="#38BDF8"/><rect x="56" y="52" width="12" height="12" fill="#38BDF8"/></svg>`
+            },
+            {
+                id: 'auto',
+                word: 'AUTO',
+                category: 'objects',
+                categoryLabel: 'Veci',
+                color: '#118AB2',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 20 55 Q 30 35 45 35 L 65 35 Q 80 35 85 55 Z" fill="#0284C7"/><rect x="10" y="52" width="80" height="20" rx="6" fill="#0EA5E9"/><circle cx="30" cy="72" r="10" fill="#1E293B"/><circle cx="30" cy="72" r="4" fill="#94A3B8"/><circle cx="70" cy="72" r="10" fill="#1E293B"/><circle cx="70" cy="72" r="4" fill="#94A3B8"/><circle cx="82" cy="58" r="4" fill="#FACC15"/></svg>`
+            },
+            {
+                id: 'sova',
+                word: 'SOVA',
+                category: 'animals',
+                categoryLabel: 'Zvieratká',
+                color: '#FFD166',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="55" rx="28" ry="32" fill="#D97706"/><circle cx="38" cy="45" r="12" fill="#FFF"/><circle cx="62" cy="45" r="12" fill="#FFF"/><circle cx="38" cy="45" r="5" fill="#1E293B"/><circle cx="62" cy="45" r="5" fill="#1E293B"/><polygon points="50,52 45,60 55,60" fill="#F97316"/><path d="M 30 25 Q 38 35 42 32 M 70 25 Q 62 35 58 32" stroke="#B45309" stroke-width="4" fill="none"/></svg>`
+            },
+            {
+                id: 'ryba',
+                word: 'RYBA',
+                category: 'animals',
+                categoryLabel: 'Zvieratká',
+                color: '#06D6A0',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="45" cy="50" rx="30" ry="20" fill="#06D6A0"/><polygon points="70,50 90,35 90,65" fill="#059669"/><circle cx="30" cy="45" r="4" fill="#1E293B"/><path d="M 40 50 Q 45 55 40 60 M 50 48 Q 55 53 50 58" stroke="#047857" stroke-width="2" fill="none"/></svg>`
+            },
+            {
+                id: 'strom',
+                word: 'STROM',
+                category: 'nature',
+                categoryLabel: 'Príroda',
+                color: '#06D6A0',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><rect x="42" y="55" width="16" height="32" fill="#78350F" rx="3"/><circle cx="50" cy="42" r="26" fill="#16A34A"/><circle cx="38" cy="35" r="18" fill="#22C55E"/><circle cx="62" cy="35" r="18" fill="#22C55E"/></svg>`
+            },
+            {
+                id: 'slnko',
+                word: 'SLNKO',
+                category: 'nature',
+                categoryLabel: 'Príroda',
+                color: '#FF9F1C',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="50" r="22" fill="#F59E0B"/><g stroke="#F59E0B" stroke-width="5" stroke-linecap="round"><line x1="50" y1="12" x2="50" y2="20"/><line x1="50" y1="80" x2="50" y2="88"/><line x1="12" y1="50" x2="20" y2="50"/><line x1="80" y1="50" x2="88" y2="50"/><line x1="23" y1="23" x2="29" y2="29"/><line x1="71" y1="71" x2="77" y2="77"/><line x1="23" y1="77" x2="29" y2="71"/><line x1="71" y1="29" x2="77" y2="23"/></g><circle cx="43" cy="46" r="3" fill="#1E293B"/><circle cx="57" cy="46" r="3" fill="#1E293B"/><path d="M 43 54 Q 50 60 57 54" stroke="#1E293B" stroke-width="2" fill="none"/></svg>`
+            },
+            {
+                id: 'jablko',
+                word: 'JABLKO',
+                category: 'nature',
+                categoryLabel: 'Príroda',
+                color: '#EF476F',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 32 30 C 20 30 15 50 25 70 C 35 88 48 88 50 85 C 52 88 65 88 75 70 C 85 50 80 30 68 30 C 58 30 53 38 50 38 C 47 38 42 30 32 30 Z" fill="#DC2626"/><path d="M 50 38 Q 52 25 58 20" stroke="#78350F" stroke-width="4" fill="none"/><path d="M 54 24 Q 68 18 64 30 Z" fill="#16A34A"/></svg>`
+            },
+            {
+                id: 'lopta',
+                word: 'LOPTA',
+                category: 'objects',
+                categoryLabel: 'Veci',
+                color: '#8338EC',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="50" r="32" fill="#3B82F6"/><path d="M 22 40 Q 50 50 78 40 M 22 60 Q 50 50 78 60" stroke="#EF476F" stroke-width="8" fill="none"/><line x1="50" y1="18" x2="50" y2="82" stroke="#FACC15" stroke-width="8"/></svg>`
+            },
+            {
+                id: 'macka',
+                word: 'MAČKA',
+                category: 'animals',
+                categoryLabel: 'Zvieratká',
+                color: '#8338EC',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><polygon points="25,20 40,40 20,45" fill="#94A3B8"/><polygon points="75,20 60,40 80,45" fill="#94A3B8"/><circle cx="50" cy="55" r="30" fill="#CBD5E1"/><ellipse cx="40" cy="50" rx="4" ry="6" fill="#10B981"/><ellipse cx="60" cy="50" rx="4" ry="6" fill="#10B981"/><polygon points="50,58 46,62 54,62" fill="#F43F5E"/><path d="M 30 60 L 15 58 M 30 64 L 12 66 M 70 60 L 85 58 M 70 64 L 88 66" stroke="#475569" stroke-width="2"/></svg>`
+            },
+            {
+                id: 'vlak',
+                word: 'VLAK',
+                category: 'objects',
+                categoryLabel: 'Veci',
+                color: '#EF476F',
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><rect x="15" y="45" width="50" height="30" fill="#EF476F" rx="4"/><rect x="65" y="30" width="25" height="45" fill="#118AB2" rx="4"/><rect x="70" y="36" width="15" height="15" fill="#E2E8F0"/><circle cx="28" cy="78" r="7" fill="#1E293B"/><circle cx="50" cy="78" r="7" fill="#1E293B"/><circle cx="78" cy="78" r="9" fill="#1E293B"/><rect x="22" y="32" width="8" height="13" fill="#475569"/></svg>`
+            }
+        ];
+
+        // Application State
+        let knownLetters = new Set();
+        let currentFilter = 'all';
+        let availableWords = [];
+        let currentIndex = 0;
+        let currentMode = 'explorer'; // 'explorer' | 'puzzle' | 'settings'
+
+        let puzzleState = {
+            placedLetters: [],
+            scrambledTiles: []
+        };
+
+        // Audio System Architecture
+        class AudioManager {
+            constructor() {
+                this.synth = window.speechSynthesis;
+                this.slovakVoice = null;
+                this.initVoices();
+                if (speechSynthesis.onvoiceschanged !== undefined) {
+                    speechSynthesis.onvoiceschanged = () => this.initVoices();
+                }
+            }
+
+            initVoices() {
+                if (!this.synth) return;
+                const voices = this.synth.getVoices();
+                this.slovakVoice = voices.find(v => v.lang.includes('sk') || v.lang.includes('SK')) || 
+                                   voices.find(v => v.lang.includes('cs') || v.lang.includes('CZ')) || null;
+            }
+
+            speakText(text, isLetter = false) {
+                const folder = isLetter ? 'letters' : 'words';
+                const cleanFileName = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const localAudioPath = `assets/audio/${folder}/${cleanFileName}.mp3`;
+
+                const audio = new Audio(localAudioPath);
+                audio.play().catch(() => {
+                    this.fallbackSpeechSynthesis(text, isLetter);
+                });
+            }
+
+            fallbackSpeechSynthesis(text, isLetter) {
+                if (!this.synth) {
+                    this.playEffect('click');
+                    return;
+                }
+                this.synth.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
+                if (this.slovakVoice) utterance.voice = this.slovakVoice;
+                utterance.lang = 'sk-SK';
+                utterance.rate = isLetter ? 0.75 : 0.85;
+                utterance.pitch = 1.15;
+                this.synth.speak(utterance);
+            }
+
+            playEffect(type) {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    if (type === 'click') {
+                        osc.frequency.setValueAtTime(450, ctx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(850, ctx.currentTime + 0.06);
+                        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.06);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.06);
+                    } else if (type === 'correct') {
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+                        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+                        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3);
+                        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.45);
+                    } else if (type === 'wrong') {
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(240, ctx.currentTime);
+                        osc.frequency.setValueAtTime(160, ctx.currentTime + 0.15);
+                        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.25);
+                    }
+                } catch(e) {}
+            }
+        }
+
+        const audioMgr = new AudioManager();
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedLetters();
+            renderSettingsGrid();
+            filterAvailableWords();
+            loadCurrentWord();
+        });
+
+        // Local Storage handling
+        function loadSavedLetters() {
+            const saved = localStorage.getItem('slabikar_known_letters');
+            if (saved) {
+                try {
+                    knownLetters = new Set(JSON.parse(saved));
+                } catch(e) {
+                    knownLetters = new Set(BASIC_FIRST_GRADE_PRESET);
+                }
+            } else {
+                knownLetters = new Set(BASIC_FIRST_GRADE_PRESET);
+            }
+        }
+
+        function saveLettersToStorage() {
+            localStorage.setItem('slabikar_known_letters', JSON.stringify(Array.from(knownLetters)));
+        }
+
+        // Filter words strictly to those containing ONLY selected letters
+        function filterAvailableWords() {
+            availableWords = WORD_DATABASE.filter(item => {
+                // Check category filter
+                if (currentFilter !== 'all' && item.category !== currentFilter) {
+                    return false;
+                }
+                
+                // Strict letter check: Every letter in the word MUST be in knownLetters
+                const chars = item.word.split('');
+                return chars.every(char => knownLetters.has(char));
+            });
+
+            if (currentIndex >= availableWords.length) {
+                currentIndex = 0;
+            }
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const expBtn = document.getElementById('modeExplorerBtn');
+            const puzBtn = document.getElementById('modePuzzleBtn');
+            const setBtn = document.getElementById('modeSettingsBtn');
+            const gameView = document.getElementById('gameView');
+            const settingsView = document.getElementById('settingsView');
+            const poolContainer = document.getElementById('scrambledPoolContainer');
+            const instr = document.getElementById('instructionText');
+
+            // Reset tab styles
+            [expBtn, puzBtn, setBtn].forEach(b => {
+                b.className = "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all text-slate-600 hover:text-slate-800";
+            });
+
+            if (mode === 'settings') {
+                setBtn.className = "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all bg-brand-orange text-white shadow-md";
+                gameView.classList.add('hidden');
+                settingsView.classList.remove('hidden');
+            } else {
+                gameView.classList.remove('hidden');
+                settingsView.classList.add('hidden');
+
+                if (mode === 'explorer') {
+                    expBtn.className = "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all bg-brand-blue text-white shadow-md";
+                    poolContainer.classList.add('hidden');
+                    instr.innerText = "Klikni na písmenko a vypočuj si jeho hlásku!";
+                } else {
+                    puzBtn.className = "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all bg-brand-green text-white shadow-md";
+                    poolContainer.classList.remove('hidden');
+                    instr.innerText = "Usporiadaj písmenká do správneho poradia!";
+                }
+                loadCurrentWord();
+            }
+
+            audioMgr.playEffect('click');
+        }
+
+        function filterCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.cat-pill').forEach(btn => {
+                btn.classList.remove('bg-brand-purple', 'text-white', 'border-purple-800');
+                btn.classList.add('bg-white', 'text-slate-700', 'border-slate-200');
+            });
+            const activeBtn = document.getElementById(`cat-${cat}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-slate-700', 'border-slate-200');
+                activeBtn.classList.add('bg-brand-purple', 'text-white', 'border-purple-800');
+            }
+
+            filterAvailableWords();
+            currentIndex = 0;
+            loadCurrentWord();
+            audioMgr.playEffect('click');
+        }
+
+        function loadCurrentWord() {
+            const noWordsView = document.getElementById('noWordsView');
+            const wordArea = document.getElementById('wordArea');
+            const navControls = document.getElementById('navControls');
+            const categoryBadge = document.getElementById('categoryBadge');
+            const wordCounter = document.getElementById('wordCounter');
+
+            if (availableWords.length === 0) {
+                noWordsView.classList.remove('hidden');
+                wordArea.classList.add('hidden');
+                navControls.classList.add('hidden');
+                wordCounter.innerText = "Dostupné slová: 0";
+                return;
+            }
+
+            noWordsView.classList.add('hidden');
+            wordArea.classList.remove('hidden');
+            navControls.classList.remove('hidden');
+
+            const wordObj = availableWords[currentIndex];
+
+            categoryBadge.innerHTML = `<i class="fa-solid fa-tag"></i> ${wordObj.categoryLabel}`;
+            wordCounter.innerText = `Slovo ${currentIndex + 1} / ${availableWords.length}`;
+            document.getElementById('svgIllustration').innerHTML = wordObj.svg;
+            document.getElementById('imageContainer').style.borderColor = wordObj.color;
+
+            if (currentMode === 'explorer') {
+                renderExplorerMode(wordObj);
+            } else if (currentMode === 'puzzle') {
+                setupPuzzleMode(wordObj);
+            }
+        }
+
+        function getCurrentWordObj() {
+            return availableWords[currentIndex] || null;
+        }
+
+        // Explorer view rendering
+        function renderExplorerMode(wordObj) {
+            const wordDisplay = document.getElementById('wordDisplay');
+            wordDisplay.innerHTML = '';
+
+            const letters = wordObj.word.split('');
+            const cardColors = ['#EF476F', '#FF9F1C', '#FFD166', '#06D6A0', '#118AB2', '#8338EC'];
+
+            letters.forEach((char, idx) => {
+                const color = cardColors[idx % cardColors.length];
+                const card = document.createElement('button');
+                card.className = `letter-card w-12 h-16 sm:w-20 sm:h-24 bg-white rounded-2xl border-4 text-2xl sm:text-5xl font-black flex items-center justify-center cursor-pointer btn-bounce shadow-lg`;
+                card.style.borderColor = color;
+                card.style.color = color;
+                card.innerText = char;
+
+                card.onclick = () => {
+                    card.classList.add('animate-wiggle');
+                    setTimeout(() => card.classList.remove('animate-wiggle'), 400);
+                    audioMgr.speakText(char, true);
+                };
+
+                wordDisplay.appendChild(card);
+            });
+        }
+
+        // Puzzle mode setup & Universal Drag/Drop + Tap mechanics
+        function setupPuzzleMode(wordObj) {
+            const targetLetters = wordObj.word.split('');
+            puzzleState.placedLetters = new Array(targetLetters.length).fill(null);
+
+            // Scramble letters
+            let scrambled = [...targetLetters];
+            for (let i = scrambled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [scrambled[i], scrambled[j]] = [scrambled[j], scrambled[i]];
+            }
+
+            puzzleState.scrambledTiles = scrambled.map((char, id) => ({
+                id: `tile-${char}-${id}-${Math.random()}`,
+                char: char,
+                placed: false
+            }));
+
+            renderPuzzleSlots();
+            renderPuzzlePool();
+        }
+
+        function renderPuzzleSlots() {
+            const wordDisplay = document.getElementById('wordDisplay');
+            wordDisplay.innerHTML = '';
+
+            puzzleState.placedLetters.forEach((placed, slotIdx) => {
+                const slot = document.createElement('div');
+                slot.dataset.slotIndex = slotIdx;
+                slot.className = `slot-box w-12 h-16 sm:w-20 sm:h-24 rounded-2xl border-4 border-dashed ${placed ? 'border-brand-blue bg-blue-50' : 'border-slate-300 bg-slate-100'} flex items-center justify-center text-2xl sm:text-5xl font-black transition-all relative`;
+
+                if (placed) {
+                    slot.innerText = placed.char;
+                    slot.style.color = '#118AB2';
+                    slot.classList.add('cursor-pointer', 'bg-white', 'border-solid', 'shadow-md');
+                    // Tap to remove
+                    slot.onclick = () => removeLetterFromSlot(slotIdx);
+                } else {
+                    slot.innerText = '';
+                }
+
+                wordDisplay.appendChild(slot);
+            });
+        }
+
+        function renderPuzzlePool() {
+            const letterPool = document.getElementById('letterPool');
+            letterPool.innerHTML = '';
+
+            puzzleState.scrambledTiles.forEach((tile) => {
+                if (!tile.placed) {
+                    const card = document.createElement('div');
+                    card.id = tile.id;
+                    card.className = `letter-card w-12 h-16 sm:w-16 sm:h-20 bg-amber-400 text-white rounded-2xl border-b-4 border-amber-600 text-2xl sm:text-4xl font-black flex items-center justify-center cursor-pointer btn-bounce shadow-md select-none`;
+                    card.innerText = tile.char;
+
+                    // Support both click/tap to place AND drag & drop
+                    makeElementDraggable(card, tile);
+
+                    letterPool.appendChild(card);
+                }
+            });
+        }
+
+        // Universal Pointer-Events Drag & Drop (Mouse, Touch, Stylus, SmartBoard)
+        function makeElementDraggable(element, tileData) {
+            let startX = 0, startY = 0;
+            let isDragging = false;
+            let ghost = null;
+
+            const onPointerDown = (e) => {
+                startX = e.clientX;
+                startY = e.clientY;
+                isDragging = false;
+
+                element.setPointerCapture(e.pointerId);
+                element.addEventListener('pointermove', onPointerMove);
+                element.addEventListener('pointerup', onPointerUp);
+            };
+
+            const onPointerMove = (e) => {
+                const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
+                if (dist > 8 && !isDragging) {
+                    isDragging = true;
+                    // Create visual dragging ghost tile
+                    ghost = element.cloneNode(true);
+                    ghost.classList.add('drag-ghost');
+                    document.body.appendChild(ghost);
+                    element.style.opacity = '0.3';
+                }
+
+                if (isDragging && ghost) {
+                    ghost.style.left = `${e.clientX}px`;
+                    ghost.style.top = `${e.clientY}px`;
+
+                    // Highlight hovered slot
+                    highlightSlotAtPosition(e.clientX, e.clientY);
+                }
+            };
+
+            const onPointerUp = (e) => {
+                element.releasePointerCapture(e.pointerId);
+                element.removeEventListener('pointermove', onPointerMove);
+                element.removeEventListener('pointerup', onPointerUp);
+
+                clearSlotHighlights();
+
+                if (isDragging) {
+                    if (ghost) ghost.remove();
+                    element.style.opacity = '1';
+
+                    // Drop check
+                    const droppedSlot = getSlotAtPosition(e.clientX, e.clientY);
+                    if (droppedSlot !== null) {
+                        placeTileInSpecificSlot(tileData, droppedSlot);
+                    }
+                } else {
+                    // It was a TAP / CLICK: Automatically place in first available slot
+                    placeLetterInSlot(tileData);
+                }
+            };
+
+            element.addEventListener('pointerdown', onPointerDown);
+        }
+
+        function highlightSlotAtPosition(x, y) {
+            clearSlotHighlights();
+            const slotIdx = getSlotAtPosition(x, y);
+            if (slotIdx !== null) {
+                const slots = document.querySelectorAll('.slot-box');
+                if (slots[slotIdx]) slots[slotIdx].classList.add('drag-over');
+            }
+        }
+
+        function clearSlotHighlights() {
+            document.querySelectorAll('.slot-box').forEach(s => s.classList.remove('drag-over'));
+        }
+
+        function getSlotAtPosition(x, y) {
+            const slots = document.querySelectorAll('.slot-box');
+            for (let i = 0; i < slots.length; i++) {
+                const rect = slots[i].getBoundingClientRect();
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    return i;
+                }
+            }
+            return null;
+        }
+
+        function placeLetterInSlot(tile) {
+            const emptyIdx = puzzleState.placedLetters.findIndex(item => item === null);
+            if (emptyIdx !== -1) {
+                placeTileInSpecificSlot(tile, emptyIdx);
+            }
+        }
+
+        function placeTileInSpecificSlot(tile, slotIdx) {
+            // If slot is occupied, displace existing tile back to pool
+            if (puzzleState.placedLetters[slotIdx]) {
+                puzzleState.placedLetters[slotIdx].placed = false;
+            }
+
+            tile.placed = true;
+            puzzleState.placedLetters[slotIdx] = tile;
+            audioMgr.speakText(tile.char, true);
+            
+            renderPuzzleSlots();
+            renderPuzzlePool();
+            checkPuzzleCompletion();
+        }
+
+        function removeLetterFromSlot(slotIdx) {
+            const tile = puzzleState.placedLetters[slotIdx];
+            if (tile) {
+                tile.placed = false;
+                puzzleState.placedLetters[slotIdx] = null;
+                audioMgr.playEffect('click');
+                renderPuzzleSlots();
+                renderPuzzlePool();
+            }
+        }
+
+        function checkPuzzleCompletion() {
+            const isFull = puzzleState.placedLetters.every(item => item !== null);
+            if (!isFull) return;
+
+            const wordObj = getCurrentWordObj();
+            if (!wordObj) return;
+
+            const currentWord = wordObj.word;
+            const formedWord = puzzleState.placedLetters.map(item => item.char).join('');
+
+            if (formedWord === currentWord) {
+                // Success celebration!
+                audioMgr.playEffect('correct');
+                setTimeout(() => audioMgr.speakText(currentWord, false), 300);
+
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 120,
+                        spread: 80,
+                        origin: { y: 0.6 }
+                    });
+                }
+
+                const wordDisplay = document.getElementById('wordDisplay');
+                wordDisplay.classList.add('pulse-success');
+                setTimeout(() => wordDisplay.classList.remove('pulse-success'), 2000);
+
+            } else {
+                // Incorrect order feedback
+                audioMgr.playEffect('wrong');
+                const wordDisplay = document.getElementById('wordDisplay');
+                wordDisplay.classList.add('animate-wiggle');
+                setTimeout(() => wordDisplay.classList.remove('animate-wiggle'), 500);
+            }
+        }
+
+        // Settings / "Moje písmenká" view logic
+        function renderSettingsGrid() {
+            const grid = document.getElementById('alphabetGrid');
+            grid.innerHTML = '';
+
+            ALL_SLOVAK_LETTERS.forEach(letter => {
+                const isSelected = knownLetters.has(letter);
+                const tile = document.createElement('button');
+                tile.className = `p-2.5 sm:p-3 rounded-2xl text-lg sm:text-2xl font-black transition-all btn-bounce border-b-4 ${
+                    isSelected 
+                        ? 'bg-brand-green text-white border-emerald-700 shadow-md scale-105' 
+                        : 'bg-slate-100 text-slate-400 border-slate-300 hover:bg-slate-200'
+                }`;
+                tile.innerText = letter;
+
+                tile.onclick = () => {
+                    if (knownLetters.has(letter)) {
+                        knownLetters.delete(letter);
+                    } else {
+                        knownLetters.add(letter);
+                        audioMgr.speakText(letter, true);
+                    }
+                    saveLettersToStorage();
+                    renderSettingsGrid();
+                    updateSelectedCount();
+                };
+
+                grid.appendChild(tile);
+            });
+
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedLettersCount').innerText = knownLetters.size;
+        }
+
+        function selectAllLetters(enable) {
+            if (enable) {
+                knownLetters = new Set(ALL_SLOVAK_LETTERS);
+            } else {
+                knownLetters.clear();
+            }
+            saveLettersToStorage();
+            renderSettingsGrid();
+            audioMgr.playEffect('click');
+        }
+
+        function presetBasicLetters() {
+            knownLetters = new Set(BASIC_FIRST_GRADE_PRESET);
+            saveLettersToStorage();
+            renderSettingsGrid();
+            audioMgr.playEffect('click');
+        }
+
+        function saveAndStartGame() {
+            filterAvailableWords();
+            switchMode('explorer');
+        }
+
+        // General Navigation Helpers
+        function playFullWordAudio() {
+            const wordObj = getCurrentWordObj();
+            if (wordObj) {
+                audioMgr.speakText(wordObj.word, false);
+                const img = document.getElementById('imageContainer');
+                img.classList.add('animate-wiggle');
+                setTimeout(() => img.classList.remove('animate-wiggle'), 500);
+            }
+        }
+
+        function nextWord() {
+            if (availableWords.length === 0) return;
+            currentIndex = (currentIndex + 1) % availableWords.length;
+            audioMgr.playEffect('click');
+            loadCurrentWord();
+        }
+
+        function prevWord() {
+            if (availableWords.length === 0) return;
+            currentIndex = (currentIndex - 1 + availableWords.length) % availableWords.length;
+            audioMgr.playEffect('click');
+            loadCurrentWord();
+        }
+
+        function randomWord() {
+            if (availableWords.length === 0) return;
+            let newIdx = Math.floor(Math.random() * availableWords.length);
+            if (newIdx === currentIndex && availableWords.length > 1) {
+                newIdx = (currentIndex + 1) % availableWords.length;
+            }
+            currentIndex = newIdx;
+            audioMgr.playEffect('click');
+            loadCurrentWord();
+        }
+    </script>
+</body>
+</html>
