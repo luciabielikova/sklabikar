@@ -1,1262 +1,425 @@
 <!DOCTYPE html>
 <html lang="sk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sklabikár - Veselé Písmenká pre Prvákov</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            yellow: '#FFD166',
-                            green: '#06D6A0',
-                            blue: '#118AB2',
-                            pink: '#EF476F',
-                            purple: '#8338EC',
-                            orange: '#FF9F1C'
-                        }
-                    },
-                    fontFamily: {
-                        fredoka: ['Fredoka', 'sans-serif'],
-                        nunito: ['Nunito', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
-
-    <style>
-        body {
-            font-family: 'Fredoka', 'Nunito', sans-serif;
-            background-color: #F7F9FC;
-            background-image: radial-gradient(#FFD166 1.5px, transparent 1.5px), radial-gradient(#118AB2 1.5px, #F7F9FC 1.5px);
-            background-size: 60px 60px;
-            background-position: 0 0, 30px 30px;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
-        }
-
-        .letter-card {
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
-            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
-            touch-action: none;
-        }
-
-        .letter-card:hover {
-            transform: translateY(-4px) scale(1.03);
-            box-shadow: 0 10px 0 rgba(0, 0, 0, 0.12);
-        }
-
-        .letter-card:active, .letter-card.dragging {
-            transform: translateY(2px) scale(1.05);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
-            z-index: 1000 !important;
-        }
-
-        .btn-bounce {
-            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .btn-bounce:hover {
-            transform: scale(1.05);
-        }
-        .btn-bounce:active {
-            transform: scale(0.95);
-        }
-
-        @keyframes wiggle {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(-6deg) scale(1.03); }
-            75% { transform: rotate(6deg) scale(1.03); }
-        }
-        .animate-wiggle {
-            animation: wiggle 0.4s ease-in-out infinite;
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 15px rgba(6, 214, 160, 0.6); }
-            50% { box-shadow: 0 0 35px rgba(6, 214, 160, 0.95); }
-        }
-        .pulse-success {
-            animation: pulse-glow 1.2s infinite;
-        }
-
-        .slot-box {
-            box-shadow: inset 0 4px 6px rgba(0,0,0,0.12);
-            transition: all 0.2s ease;
-        }
-        .slot-box.drag-over {
-            border-color: #06D6A0 !important;
-            background-color: #E6FFFA !important;
-            transform: scale(1.08);
-        }
-
-        .drag-ghost {
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0.9;
-            transform: translate(-50%, -50%) scale(1.1);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-            transition: none;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sklabikár - Veselé písmenká pre prvákov</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:{yellow:'#FFD166',green:'#06D6A0',blue:'#118AB2',pink:'#EF476F',purple:'#8338EC',orange:'#FF9F1C'}}}}}
+</script>
+<style>
+body{font-family:'Fredoka','Nunito','Segoe UI','Arial Rounded MT Bold',Arial,sans-serif;background:#F7F9FC;touch-action:manipulation}
+.tile{font-family:'Nunito','Segoe UI',Arial,sans-serif;font-weight:900}
+.letter-card{transition:transform .2s cubic-bezier(.175,.885,.32,1.275);box-shadow:0 6px 0 rgba(0,0,0,.15);touch-action:none}
+.letter-card:hover{transform:translateY(-4px) scale(1.03)}
+.btn-bounce{transition:transform .15s}.btn-bounce:hover{transform:scale(1.05)}.btn-bounce:active{transform:scale(.95)}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+.animate-wiggle{animation:wiggle .4s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 15px rgba(6,214,160,.6)}50%{box-shadow:0 0 35px rgba(6,214,160,.95)}}
+.pulse-success{animation:glow 1.2s infinite}
+.slot-box{box-shadow:inset 0 4px 6px rgba(0,0,0,.12)}
+.slot-box.drag-over{border-color:#06D6A0!important;background:#E6FFFA!important;transform:scale(1.08)}
+.drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.9;transform:translate(-50%,-50%) scale(1.1)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #8338EC;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col justify-between overflow-x-hidden">
 
-    <!-- Header Navigation -->
-    <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-brand-yellow sticky top-0 z-40 px-3 sm:px-6 py-2.5 shadow-md">
-        <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-4">
-            
-            <!-- Logo Sklabikár -->
-            <div class="flex items-center gap-2 sm:gap-3 cursor-pointer" onclick="switchMode('explorer')">
-                <div class="bg-brand-pink text-white w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-black shadow-lg transform -rotate-3">
-                    S
-                </div>
-                <div>
-                    <h1 class="text-xl sm:text-3xl font-black text-brand-purple tracking-wide leading-none">
-                        SKLABIKÁR
-                    </h1>
-                    <p class="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Učíme sa písmenká</p>
-                </div>
-            </div>
-
-            <!-- Main Navigation Buttons -->
-            <div class="flex items-center bg-slate-100 p-1 sm:p-1.5 rounded-2xl border-2 border-slate-200 gap-1">
-                <button id="modeExplorerBtn" onclick="switchMode('explorer')" class="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all bg-brand-blue text-white shadow-md">
-                    <i class="fa-solid fa-magnifying-glass mr-1"></i>Prieskumník
-                </button>
-                <button id="modePuzzleBtn" onclick="switchMode('puzzle')" class="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all text-slate-600 hover:text-slate-800">
-                    <i class="fa-solid fa-puzzle-piece mr-1"></i>Skladačka
-                </button>
-                <button id="modeSettingsBtn" onclick="switchMode('settings')" class="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all text-slate-600 hover:text-slate-800 bg-amber-100/60 text-amber-900 border border-amber-300">
-                    <i class="fa-solid fa-sliders text-brand-orange mr-1"></i>Moje písmenká
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Application Container -->
-    <main class="max-w-5xl w-full mx-auto p-3 sm:p-6 flex-grow flex flex-col justify-center items-center">
-
-        <!-- ==================== GAME VIEWS (Explorer & Puzzle) ==================== -->
-        <div id="gameView" class="w-full flex flex-col items-center">
-
-            <!-- Category Selector Filters -->
-            <div id="categoryFilters" class="flex flex-wrap justify-center gap-1.5 sm:gap-3 mb-4 sm:mb-6">
-                <button onclick="filterCategory('all')" id="cat-all" class="cat-pill bg-brand-purple text-white px-4 sm:px-5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs sm:text-base border-b-4 border-purple-800 btn-bounce shadow-md">
-                    <i class="fa-solid fa-shapes mr-1"></i>Všetky slová
-                </button>
-                <button onclick="filterCategory('animals')" id="cat-animals" class="cat-pill bg-white text-slate-700 px-4 sm:px-5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs sm:text-base border-b-4 border-slate-200 btn-bounce hover:bg-slate-50">
-                    <i class="fa-solid fa-paw text-brand-orange mr-1"></i>Zvieratká
-                </button>
-                <button onclick="filterCategory('nature')" id="cat-nature" class="cat-pill bg-white text-slate-700 px-4 sm:px-5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs sm:text-base border-b-4 border-slate-200 btn-bounce hover:bg-slate-50">
-                    <i class="fa-solid fa-tree text-brand-green mr-1"></i>Príroda
-                </button>
-                <button onclick="filterCategory('objects')" id="cat-objects" class="cat-pill bg-white text-slate-700 px-4 sm:px-5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs sm:text-base border-b-4 border-slate-200 btn-bounce hover:bg-slate-50">
-                    <i class="fa-solid fa-car text-brand-blue mr-1"></i>Veci
-                </button>
-            </div>
-
-            <!-- Main Interactive Card -->
-            <div class="w-full bg-white rounded-3xl border-4 border-slate-200 p-4 sm:p-8 shadow-2xl relative flex flex-col items-center min-h-[460px] justify-between">
-                
-                <!-- Category Badge & Word Counter & Active Profile Indicator -->
-                <div class="w-full flex flex-wrap justify-between items-center gap-2 mb-2 sm:mb-4">
-                    <div class="flex items-center gap-2">
-                        <span id="categoryBadge" class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1">
-                            <i class="fa-solid fa-tag"></i> Zvieratká
-                        </span>
-                        <span id="activeProfileBadge" class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-bold text-xs sm:text-sm flex items-center gap-1">
-                            <i class="fa-solid fa-user-graduate"></i> <span id="activeProfileBadgeName">Žiak 1</span>
-                        </span>
-                    </div>
-                    <span id="wordCounter" class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-bold text-xs sm:text-sm">
-                        Dostupné slová: 0
-                    </span>
-                </div>
-
-                <!-- Empty State Message -->
-                <div id="noWordsView" class="hidden my-auto py-8 text-center flex flex-col items-center max-w-md">
-                    <div class="w-20 h-20 bg-amber-100 text-brand-orange rounded-full flex items-center justify-center text-4xl mb-4 shadow-inner">
-                        <i class="fa-solid fa-lock"></i>
-                    </div>
-                    <h3 class="text-xl sm:text-2xl font-black text-slate-800 mb-2">Žiadne dostupné slová</h3>
-                    <p class="text-sm sm:text-base font-bold text-slate-500 mb-6">
-                        Pre zvolený profil a vybrané písmenká sme nenašli žiadne slovo. Skús v "Moje písmenká" označiť viac písmeniek!
-                    </p>
-                    <button onclick="switchMode('settings')" class="bg-brand-orange text-white px-6 py-3 rounded-2xl font-black text-base border-b-4 border-amber-700 btn-bounce shadow-lg">
-                        <i class="fa-solid fa-sliders mr-2"></i>Otvoriť "Moje písmenká"
-                    </button>
-                </div>
-
-                <!-- Active Word Display Container -->
-                <div id="wordArea" class="w-full flex flex-col items-center my-auto">
-                    
-                    <!-- Image Illustration Box -->
-                    <div class="relative group my-2">
-                        <div id="imageContainer" class="w-40 h-40 sm:w-56 sm:h-56 bg-gradient-to-br from-blue-50 to-amber-50 rounded-3xl border-4 border-brand-yellow p-4 flex items-center justify-center shadow-inner overflow-hidden transition-transform duration-300">
-                            <div id="illustrationBox" class="w-full h-full flex items-center justify-center">
-                                <!-- Image or SVG inserted dynamically -->
-                            </div>
-                        </div>
-
-                        <!-- Read Word Button -->
-                        <button onclick="playFullWordAudio()" class="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 bg-brand-green hover:bg-emerald-500 text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full border-4 border-white flex items-center justify-center shadow-lg btn-bounce cursor-pointer group" title="Prečítaj celé slovo">
-                            <i class="fa-solid fa-volume-high text-xl sm:text-2xl group-hover:scale-110 transition-transform"></i>
-                        </button>
-                    </div>
-
-                    <p id="instructionText" class="mt-3 sm:mt-4 text-slate-500 font-bold text-center text-xs sm:text-base">
-                        Klikni na písmenko a vypočuj si jeho hlásku!
-                    </p>
-
-                    <!-- Slots or Card Letters Container -->
-                    <div id="wordDisplay" class="flex flex-wrap justify-center gap-2 sm:gap-4 my-4 sm:my-6 min-h-[70px]">
-                        <!-- Dynamic letter cards or target slots -->
-                    </div>
-
-                    <!-- Scrambled Letter Bank for Puzzle Mode -->
-                    <div id="scrambledPoolContainer" class="hidden w-full mt-2 pt-4 border-t-2 border-dashed border-slate-200 flex flex-col items-center">
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider text-center mb-3">
-                            Dostupné písmenká (klikni alebo pretiahni):
-                        </p>
-                        <div id="letterPool" class="flex flex-wrap justify-center gap-2 sm:gap-3 min-h-[64px] mb-3">
-                            <!-- Scrambled tiles -->
-                        </div>
-                        <button id="checkPuzzleBtn" onclick="manualCheckPuzzle()" class="bg-brand-green hover:bg-emerald-600 text-white px-6 py-2.5 rounded-2xl font-black text-sm border-b-4 border-emerald-800 btn-bounce shadow-md">
-                            <i class="fa-solid fa-check mr-1"></i> Skontrolovať
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Navigation Controls -->
-                <div id="navControls" class="w-full flex justify-between items-center mt-4 sm:mt-6 pt-4 border-t border-slate-100">
-                    <button onclick="prevWord()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-base flex items-center gap-2 border-b-4 border-slate-300 btn-bounce">
-                        <i class="fa-solid fa-arrow-left"></i> <span>Predchádzajúce</span>
-                    </button>
-                    
-                    <button onclick="randomWord()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-base flex items-center gap-2 border-b-4 border-amber-300 btn-bounce">
-                        <i class="fa-solid fa-dice text-lg"></i> <span class="hidden sm:inline">Náhodné</span>
-                    </button>
-
-                    <button onclick="nextWord()" class="bg-brand-pink hover:bg-rose-600 text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-base flex items-center gap-2 border-b-4 border-rose-800 btn-bounce shadow-md">
-                        <span>Ďalšie</span> <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- ==================== "MOJE PÍSMENKÁ" & DATASET SETTINGS VIEW ==================== -->
-        <div id="settingsView" class="hidden w-full max-w-4xl bg-white rounded-3xl border-4 border-slate-200 p-5 sm:p-8 shadow-2xl flex flex-col gap-6">
-            
-            <!-- Student Profile Switcher -->
-            <div class="bg-amber-50 rounded-2xl p-4 border-2 border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-brand-orange text-white rounded-2xl flex items-center justify-center text-xl font-black shadow">
-                        <i class="fa-solid fa-user-graduate"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-black text-slate-800 text-base sm:text-lg">Profil žiaka / Používateľa</h3>
-                        <p class="text-xs text-slate-500 font-bold">Každý žiak má vlastný zoznam poznaných písmeniek</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <select id="profileSelect" onchange="changeProfile(this.value)" class="bg-white border-2 border-amber-300 text-slate-800 font-bold text-sm rounded-xl px-3 py-2 outline-none focus:border-brand-orange flex-grow sm:flex-grow-0">
-                        <!-- Dynamic profile options -->
-                    </select>
-                    <button onclick="createNewProfile()" class="bg-brand-green text-white px-3 py-2 rounded-xl font-bold text-sm border-b-2 border-emerald-800 btn-bounce shadow" title="Pridať nového žiaka">
-                        <i class="fa-solid fa-plus"></i> Nový
-                    </button>
-                </div>
-            </div>
-
-            <!-- Alphabet Header -->
-            <div class="text-center">
-                <h2 class="text-2xl sm:text-3xl font-black text-slate-800">Poznané písmenká</h2>
-                <p class="text-xs sm:text-sm font-bold text-slate-500 mt-1">
-                    Vyber písmenká, ktoré dieťa už pozná. Zložená spájka <strong class="text-brand-purple">CH</strong> je podporovaná ako samostatné písmenko.
-                </p>
-            </div>
-
-            <!-- Quick Action Preset Buttons -->
-            <div class="flex flex-wrap justify-center gap-2">
-                <button onclick="presetBasicLetters()" class="bg-brand-blue text-white px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-b-4 border-blue-800 btn-bounce shadow">
-                    <i class="fa-solid fa-star mr-1"></i>Základné prvácke (A, E, I, O, U, M, P, S, L, V, T, CH...)
-                </button>
-                <button onclick="selectAllLetters(true)" class="bg-brand-green text-white px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-b-4 border-emerald-800 btn-bounce shadow">
-                    <i class="fa-solid fa-check-double mr-1"></i>Označiť všetky
-                </button>
-                <button onclick="selectAllLetters(false)" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border-b-4 border-slate-300 btn-bounce">
-                    <i class="fa-solid fa-xmark mr-1"></i>Zrušiť všetky
-                </button>
-            </div>
-
-            <!-- Full Alphabet Grid -->
-            <div id="alphabetGrid" class="grid grid-cols-4 sm:grid-cols-7 md:grid-cols-9 gap-2 sm:gap-3 my-2">
-                <!-- Dynamically populated alphabet tiles -->
-            </div>
-
-            <!-- Dataset Manager Section -->
-            <div class="bg-slate-50 rounded-2xl p-4 border-2 border-slate-200 mt-2">
-                <div class="flex items-center justify-between cursor-pointer" onclick="toggleDatasetTools()">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-database text-brand-purple text-lg"></i>
-                        <h4 class="font-black text-slate-800 text-sm sm:text-base">Správa datasetu (vlastné obrázky a slová)</h4>
-                    </div>
-                    <i id="datasetChevron" class="fa-solid fa-chevron-down text-slate-400"></i>
-                </div>
-
-                <div id="datasetToolsContent" class="hidden mt-4 pt-4 border-t border-slate-200 flex flex-col gap-3">
-                    <p class="text-xs font-bold text-slate-500">
-                        Môžeš si stiahnuť aktuálny zoznam slov vo formate JSON, pridať vlastné obrázky (URL alebo lokálne cesty <code class="bg-white px-1 py-0.5 rounded border border-slate-300">assets/images/obrazok.jpg</code>) a nahrať ho späť.
-                    </p>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="exportDatasetJSON()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl font-bold text-xs btn-bounce">
-                            <i class="fa-solid fa-download mr-1"></i> Stiahnuť dataset (JSON)
-                        </button>
-                        <label class="bg-brand-purple hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-bold text-xs btn-bounce cursor-pointer">
-                            <i class="fa-solid fa-upload mr-1"></i> Nahrať vlastný dataset (JSON)
-                            <input type="file" id="datasetFileInput" accept=".json" class="hidden" onchange="importDatasetJSON(event)">
-                        </label>
-                        <button onclick="resetDefaultDataset()" class="bg-rose-100 hover:bg-rose-200 text-rose-800 px-4 py-2 rounded-xl font-bold text-xs btn-bounce">
-                            <i class="fa-solid fa-rotate-left mr-1"></i> Obnoviť pôvodný dataset
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bottom Action Bar -->
-            <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="text-xs font-bold text-slate-500 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-info text-brand-blue text-base"></i>
-                    <span>Označených písmeniek: <strong id="selectedLettersCount" class="text-brand-purple text-sm">0</strong></span>
-                </div>
-                <button onclick="saveAndStartGame()" class="w-full sm:w-auto bg-brand-pink hover:bg-rose-600 text-white px-8 py-3 rounded-2xl font-black text-base border-b-4 border-rose-800 btn-bounce shadow-lg flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-play"></i> Uložiť a hrať!
-                </button>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Footer with Contact Info -->
-    <footer class="w-full bg-white border-t border-slate-200 py-4 px-4 text-center text-xs font-bold text-slate-500 mt-6 shadow-inner">
-        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p><strong>Sklableikár</strong> • Prispôsobivá výučba čítania a písania pre prvákov ZŠ</p>
-            <div class="flex items-center gap-4">
-                <a href="mailto:kontakt@sklabikar.sk" class="text-brand-blue hover:underline flex items-center gap-1">
-                    <i class="fa-solid fa-envelope"></i> Kontakt / Podpora
-                </a>
-                <span>•</span>
-                <span class="text-slate-400">Verzia 2.1</span>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        // Requested Exact Alphabet
-        const ALL_SLOVAK_LETTERS = [
-            'A', 'Á', 'Ä', 'B', 'C', 'Č', 'D', 'Ď', 'E', 'É', 'F', 'G', 'H', 'CH',
-            'I', 'Í', 'J', 'K', 'L', 'Ĺ', 'Ľ', 'M', 'N', 'Ň', 'O', 'Ó', 'Ô', 'P', 'Q',
-            'R', 'Ŕ', 'S', 'Š', 'T', 'Ť', 'U', 'Ú', 'V', 'W', 'X', 'Y', 'Ý', 'Z', 'Ž'
-        ];
-
-        const BASIC_FIRST_GRADE_PRESET = ['A', 'E', 'I', 'O', 'U', 'M', 'P', 'S', 'L', 'V', 'T', 'J', 'R', 'D', 'K', 'B', 'C', 'CH'];
-
-        // Default Word Dataset
-        const DEFAULT_WORD_DATABASE = [
-            {
-                id: 'chata',
-                word: 'CHATA',
-                category: 'objects',
-                categoryLabel: 'Veci',
-                color: '#FF9F1C',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><polygon points="50,15 10,50 90,50" fill="#B45309"/><rect x="20" y="50" width="60" height="38" fill="#D97706"/><rect x="42" y="62" width="16" height="26" fill="#78350F"/><rect x="30" y="58" width="8" height="10" fill="#FEF08A"/><rect x="62" y="58" width="8" height="10" fill="#FEF08A"/></svg>`
-            },
-            {
-                id: 'pes',
-                word: 'PES',
-                category: 'animals',
-                categoryLabel: 'Zvieratká',
-                color: '#FF9F1C',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 35 25 C 20 25 15 45 25 60 C 35 75 65 75 75 60 C 85 45 80 25 65 25 Z" fill="#D97706"/><circle cx="40" cy="45" r="5" fill="#1E293B"/><circle cx="60" cy="45" r="5" fill="#1E293B"/><ellipse cx="50" cy="55" rx="7" ry="5" fill="#1E293B"/><path d="M 20 30 Q 10 40 22 50 Z" fill="#B45309"/><path d="M 80 30 Q 90 40 78 50 Z" fill="#B45309"/><path d="M 45 62 Q 50 70 55 62 Z" fill="#EF476F"/></svg>`
-            },
-            {
-                id: 'les',
-                word: 'LES',
-                category: 'nature',
-                categoryLabel: 'Príroda',
-                color: '#06D6A0',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><polygon points="30,70 15,45 25,45 18,25 35,25 30,10 45,30 40,45 50,45 35,70" fill="#16A34A"/><polygon points="70,75 55,50 65,50 58,32 75,32 70,18 85,38 80,52 90,52 75,75" fill="#15803D"/><rect x="27" y="70" width="6" height="15" fill="#78350F"/><rect x="67" y="75" width="6" height="12" fill="#78350F"/></svg>`
-            },
-            {
-                id: 'osa',
-                word: 'OSA',
-                category: 'animals',
-                categoryLabel: 'Zvieratká',
-                color: '#FFD166',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="50" rx="18" ry="30" fill="#FACC15"/><path d="M 32 42 h 36 M 32 50 h 36 M 32 58 h 36" stroke="#1E293B" stroke-width="4"/><circle cx="50" cy="22" r="10" fill="#1E293B"/><circle cx="46" cy="20" r="2" fill="#FFF"/><circle cx="54" cy="20" r="2" fill="#FFF"/><path d="M 30 38 Q 10 20 30 25 M 70 38 Q 90 20 70 25" stroke="#38BDF8" stroke-width="3" fill="none"/></svg>`
-            },
-            {
-                id: 'misa',
-                word: 'MISA',
-                category: 'objects',
-                categoryLabel: 'Veci',
-                color: '#118AB2',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 15 35 C 20 75 80 75 85 35 Z" fill="#38BDF8"/><ellipse cx="50" cy="35" rx="35" ry="8" fill="#7DD3FC"/><circle cx="40" cy="50" r="4" fill="#F43F5E"/><circle cx="55" cy="55" r="5" fill="#FACC15"/><circle cx="62" cy="48" r="4" fill="#4ADE80"/></svg>`
-            },
-            {
-                id: 'mama',
-                word: 'MAMA',
-                category: 'objects',
-                categoryLabel: 'Veci',
-                color: '#EF476F',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 50 25 C 20 -5 0 35 50 85 C 100 35 80 -5 50 25 Z" fill="#EF476F"/></svg>`
-            },
-            {
-                id: 'dom',
-                word: 'DOM',
-                category: 'objects',
-                categoryLabel: 'Veci',
-                color: '#EF476F',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><polygon points="50,15 15,45 85,45" fill="#EF476F"/><rect x="25" y="45" width="50" height="42" fill="#FDE047"/><rect x="42" y="62" width="16" height="25" fill="#B45309"/><rect x="32" y="52" width="12" height="12" fill="#38BDF8"/><rect x="56" y="52" width="12" height="12" fill="#38BDF8"/></svg>`
-            },
-            {
-                id: 'auto',
-                word: 'AUTO',
-                category: 'objects',
-                categoryLabel: 'Veci',
-                color: '#118AB2',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 20 55 Q 30 35 45 35 L 65 35 Q 80 35 85 55 Z" fill="#0284C7"/><rect x="10" y="52" width="80" height="20" rx="6" fill="#0EA5E9"/><circle cx="30" cy="72" r="10" fill="#1E293B"/><circle cx="30" cy="72" r="4" fill="#94A3B8"/><circle cx="70" cy="72" r="10" fill="#1E293B"/><circle cx="70" cy="72" r="4" fill="#94A3B8"/><circle cx="82" cy="58" r="4" fill="#FACC15"/></svg>`
-            },
-            {
-                id: 'sova',
-                word: 'SOVA',
-                category: 'animals',
-                categoryLabel: 'Zvieratká',
-                color: '#FFD166',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="55" rx="28" ry="32" fill="#D97706"/><circle cx="38" cy="45" r="12" fill="#FFF"/><circle cx="62" cy="45" r="12" fill="#FFF"/><circle cx="38" cy="45" r="5" fill="#1E293B"/><circle cx="62" cy="45" r="5" fill="#1E293B"/><polygon points="50,52 45,60 55,60" fill="#F97316"/><path d="M 30 25 Q 38 35 42 32 M 70 25 Q 62 35 58 32" stroke="#B45309" stroke-width="4" fill="none"/></svg>`
-            },
-            {
-                id: 'ryba',
-                word: 'RYBA',
-                category: 'animals',
-                categoryLabel: 'Zvieratká',
-                color: '#06D6A0',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="45" cy="50" rx="30" ry="20" fill="#06D6A0"/><polygon points="70,50 90,35 90,65" fill="#059669"/><circle cx="30" cy="45" r="4" fill="#1E293B"/><path d="M 40 50 Q 45 55 40 60 M 50 48 Q 55 53 50 58" stroke="#047857" stroke-width="2" fill="none"/></svg>`
-            },
-            {
-                id: 'strom',
-                word: 'STROM',
-                category: 'nature',
-                categoryLabel: 'Príroda',
-                color: '#06D6A0',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><rect x="42" y="55" width="16" height="32" fill="#78350F" rx="3"/><circle cx="50" cy="42" r="26" fill="#16A34A"/><circle cx="38" cy="35" r="18" fill="#22C55E"/><circle cx="62" cy="35" r="18" fill="#22C55E"/></svg>`
-            },
-            {
-                id: 'slnko',
-                word: 'SLNKO',
-                category: 'nature',
-                categoryLabel: 'Príroda',
-                color: '#FF9F1C',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="50" r="22" fill="#F59E0B"/><g stroke="#F59E0B" stroke-width="5" stroke-linecap="round"><line x1="50" y1="12" x2="50" y2="20"/><line x1="50" y1="80" x2="50" y2="88"/><line x1="12" y1="50" x2="20" y2="50"/><line x1="80" y1="50" x2="88" y2="50"/><line x1="23" y1="23" x2="29" y2="29"/><line x1="71" y1="71" x2="77" y2="77"/><line x1="23" y1="77" x2="29" y2="71"/><line x1="71" y1="29" x2="77" y2="23"/></g><circle cx="43" cy="46" r="3" fill="#1E293B"/><circle cx="57" cy="46" r="3" fill="#1E293B"/><path d="M 43 54 Q 50 60 57 54" stroke="#1E293B" stroke-width="2" fill="none"/></svg>`
-            },
-            {
-                id: 'jablko',
-                word: 'JABLKO',
-                category: 'nature',
-                categoryLabel: 'Príroda',
-                color: '#EF476F',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M 32 30 C 20 30 15 50 25 70 C 35 88 48 88 50 85 C 52 88 65 88 75 70 C 85 50 80 30 68 30 C 58 30 53 38 50 38 C 47 38 42 30 32 30 Z" fill="#DC2626"/><path d="M 50 38 Q 52 25 58 20" stroke="#78350F" stroke-width="4" fill="none"/><path d="M 54 24 Q 68 18 64 30 Z" fill="#16A34A"/></svg>`
-            },
-            {
-                id: 'lopta',
-                word: 'LOPTA',
-                category: 'objects',
-                categoryLabel: 'Veci',
-                color: '#8338EC',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="50" r="32" fill="#3B82F6"/><path d="M 22 40 Q 50 50 78 40 M 22 60 Q 50 50 78 60" stroke="#EF476F" stroke-width="8" fill="none"/><line x1="50" y1="18" x2="50" y2="82" stroke="#FACC15" stroke-width="8"/></svg>`
-            },
-            {
-                id: 'macka',
-                word: 'MAČKA',
-                category: 'animals',
-                categoryLabel: 'Zvieratká',
-                color: '#8338EC',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><polygon points="25,20 40,40 20,45" fill="#94A3B8"/><polygon points="75,20 60,40 80,45" fill="#94A3B8"/><circle cx="50" cy="55" r="30" fill="#CBD5E1"/><ellipse cx="40" cy="50" rx="4" ry="6" fill="#10B981"/><ellipse cx="60" cy="50" rx="4" ry="6" fill="#10B981"/><polygon points="50,58 46,62 54,62" fill="#F43F5E"/><path d="M 30 60 L 15 58 M 30 64 L 12 66 M 70 60 L 85 58 M 70 64 L 88 66" stroke="#475569" stroke-width="2"/></svg>`
-            },
-            {
-                id: 'vlak',
-                word: 'VLAK',
-                category: 'objects',
-                categoryLabel: 'Veci',
-                color: '#EF476F',
-                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><rect x="15" y="45" width="50" height="30" fill="#EF476F" rx="4"/><rect x="65" y="30" width="25" height="45" fill="#118AB2" rx="4"/><rect x="70" y="36" width="15" height="15" fill="#E2E8F0"/><circle cx="28" cy="78" r="7" fill="#1E293B"/><circle cx="50" cy="78" r="7" fill="#1E293B"/><circle cx="78" cy="78" r="9" fill="#1E293B"/><rect x="22" y="32" width="8" height="13" fill="#475569"/></svg>`
-            }
-        ];
-
-        let wordDatabase = [...DEFAULT_WORD_DATABASE];
-
-        // State Management
-        let profiles = {};
-        let activeProfileId = 'ziak_1';
-
-        let knownLetters = new Set();
-        let currentFilter = 'all';
-        let availableWords = [];
-        let currentIndex = 0;
-        let currentMode = 'explorer';
-
-        let puzzleState = {
-            placedLetters: [],
-            scrambledTiles: []
-        };
-
-        // Utility: Split Slovak words into letter tokens (handling "CH" digraph as single token)
-        function splitWordToTokens(word) {
-            const tokens = [];
-            let i = 0;
-            const upper = word.toUpperCase();
-            while (i < upper.length) {
-                if (upper.substring(i, i + 2) === 'CH') {
-                    tokens.push('CH');
-                    i += 2;
-                } else {
-                    tokens.push(upper[i]);
-                    i++;
-                }
-            }
-            return tokens;
-        }
-
-        // Audio System Architecture
-        class AudioManager {
-            constructor() {
-                this.synth = window.speechSynthesis;
-                this.slovakVoice = null;
-                this.initVoices();
-                if (speechSynthesis.onvoiceschanged !== undefined) {
-                    speechSynthesis.onvoiceschanged = () => this.initVoices();
-                }
-            }
-
-            initVoices() {
-                if (!this.synth) return;
-                const voices = this.synth.getVoices();
-                this.slovakVoice = voices.find(v => v.lang.includes('sk') || v.lang.includes('SK')) || 
-                                   voices.find(v => v.lang.includes('cs') || v.lang.includes('CZ')) || null;
-            }
-
-            speakText(text, isLetter = false) {
-                const folder = isLetter ? 'letters' : 'words';
-                const cleanFileName = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                const localAudioPath = `assets/audio/${folder}/${cleanFileName}.mp3`;
-
-                const audio = new Audio(localAudioPath);
-                audio.play().catch(() => {
-                    this.fallbackSpeechSynthesis(text, isLetter);
-                });
-            }
-
-            speakWrongAttempt(incorrectWord) {
-                if (!this.synth) return;
-                this.synth.cancel();
-
-                // 1. Speak the wrongly created pseudo-word
-                const wrongUtterance = new SpeechSynthesisUtterance(incorrectWord.toLowerCase());
-                if (this.slovakVoice) wrongUtterance.voice = this.slovakVoice;
-                wrongUtterance.lang = 'sk-SK';
-                wrongUtterance.rate = 0.75;
-
-                // 2. Follow up with encouraging Slovak message
-                wrongUtterance.onend = () => {
-                    setTimeout(() => {
-                        const encourageUtterance = new SpeechSynthesisUtterance("Skús to znova!");
-                        if (this.slovakVoice) encourageUtterance.voice = this.slovakVoice;
-                        encourageUtterance.lang = 'sk-SK';
-                        encourageUtterance.rate = 0.9;
-                        this.synth.speak(encourageUtterance);
-                    }, 250);
-                };
-
-                this.synth.speak(wrongUtterance);
-            }
-
-            fallbackSpeechSynthesis(text, isLetter) {
-                if (!this.synth) {
-                    this.playEffect('click');
-                    return;
-                }
-                this.synth.cancel();
-
-                const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
-                if (this.slovakVoice) utterance.voice = this.slovakVoice;
-                utterance.lang = 'sk-SK';
-                utterance.rate = isLetter ? 0.75 : 0.85;
-                utterance.pitch = 1.15;
-                this.synth.speak(utterance);
-            }
-
-            playEffect(type) {
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-
-                    if (type === 'click') {
-                        osc.frequency.setValueAtTime(450, ctx.currentTime);
-                        osc.frequency.exponentialRampToValueAtTime(850, ctx.currentTime + 0.06);
-                        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.06);
-                        osc.start();
-                        osc.stop(ctx.currentTime + 0.06);
-                    } else if (type === 'correct') {
-                        osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
-                        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
-                        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
-                        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3);
-                        gain.gain.setValueAtTime(0.25, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
-                        osc.start();
-                        osc.stop(ctx.currentTime + 0.45);
-                    } else if (type === 'wrong') {
-                        osc.type = 'sawtooth';
-                        osc.frequency.setValueAtTime(240, ctx.currentTime);
-                        osc.frequency.setValueAtTime(160, ctx.currentTime + 0.15);
-                        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-                        osc.start();
-                        osc.stop(ctx.currentTime + 0.25);
-                    }
-                } catch(e) {}
-            }
-        }
-
-        const audioMgr = new AudioManager();
-
-        // Initialization
-        window.addEventListener('DOMContentLoaded', () => {
-            loadDatasetFromStorage();
-            loadProfilesFromStorage();
-            renderSettingsGrid();
-            filterAvailableWords();
-            loadCurrentWord();
-        });
-
-        // Profiles Management
-        function loadProfilesFromStorage() {
-            const saved = localStorage.getItem('sklabikar_profiles');
-            const savedActive = localStorage.getItem('sklabikar_active_profile');
-
-            if (saved) {
-                try {
-                    profiles = JSON.parse(saved);
-                } catch(e) {
-                    profiles = { 'ziak_1': { name: 'Žiak 1', letters: BASIC_FIRST_GRADE_PRESET } };
-                }
-            } else {
-                profiles = { 'ziak_1': { name: 'Žiak 1', letters: BASIC_FIRST_GRADE_PRESET } };
-            }
-
-            activeProfileId = (savedActive && profiles[savedActive]) ? savedActive : Object.keys(profiles)[0];
-            knownLetters = new Set(profiles[activeProfileId].letters || BASIC_FIRST_GRADE_PRESET);
-            renderProfileSelector();
-        }
-
-        function saveProfilesToStorage() {
-            if (profiles[activeProfileId]) {
-                profiles[activeProfileId].letters = Array.from(knownLetters);
-            }
-            localStorage.setItem('sklabikar_profiles', JSON.stringify(profiles));
-            localStorage.setItem('sklabikar_active_profile', activeProfileId);
-            
-            const name = profiles[activeProfileId] ? profiles[activeProfileId].name : '';
-            document.getElementById('activeProfileBadgeName').innerText = name;
-        }
-
-        function renderProfileSelector() {
-            const select = document.getElementById('profileSelect');
-            select.innerHTML = '';
-            Object.keys(profiles).forEach(id => {
-                const opt = document.createElement('option');
-                opt.value = id;
-                opt.innerText = profiles[id].name;
-                if (id === activeProfileId) opt.selected = true;
-                select.appendChild(opt);
-            });
-            document.getElementById('activeProfileBadgeName').innerText = profiles[activeProfileId].name;
-        }
-
-        function changeProfile(newId) {
-            if (profiles[newId]) {
-                saveProfilesToStorage();
-                activeProfileId = newId;
-                knownLetters = new Set(profiles[activeProfileId].letters || []);
-                renderProfileSelector();
-                renderSettingsGrid();
-                filterAvailableWords();
-                loadCurrentWord();
-            }
-        }
-
-        function createNewProfile() {
-            const name = prompt("Zadaj meno nového žiaka / profilu:", "Žiak " + (Object.keys(profiles).length + 1));
-            if (name && name.trim()) {
-                const newId = 'ziak_' + Date.now();
-                profiles[newId] = {
-                    name: name.trim(),
-                    letters: BASIC_FIRST_GRADE_PRESET
-                };
-                changeProfile(newId);
-            }
-        }
-
-        // Custom Dataset Import / Export / Storage
-        function loadDatasetFromStorage() {
-            const saved = localStorage.getItem('sklabikar_custom_dataset');
-            if (saved) {
-                try {
-                    wordDatabase = JSON.parse(saved);
-                } catch(e) {
-                    wordDatabase = [...DEFAULT_WORD_DATABASE];
-                }
-            } else {
-                wordDatabase = [...DEFAULT_WORD_DATABASE];
-            }
-        }
-
-        function toggleDatasetTools() {
-            const content = document.getElementById('datasetToolsContent');
-            const chevron = document.getElementById('datasetChevron');
-            content.classList.toggle('hidden');
-            chevron.classList.toggle('rotate-180');
-        }
-
-        function exportDatasetJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(wordDatabase, null, 2));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "sklabikar_dataset.json");
-            document.body.appendChild(dlAnchorElem);
-            dlAnchorElem.click();
-            dlAnchorElem.remove();
-        }
-
-        function importDatasetJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) {
-                        wordDatabase = imported;
-                        localStorage.setItem('sklabikar_custom_dataset', JSON.stringify(wordDatabase));
-                        alert('Dataset bol úspešne načítaný!');
-                        filterAvailableWords();
-                        loadCurrentWord();
-                    } else {
-                        alert('Chyba: Súbor musí obsahovať zoznam slov vo formáte JSON.');
-                    }
-                } catch(err) {
-                    alert('Chyba pri čítaní JSON súboru.');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function resetDefaultDataset() {
-            if (confirm("Naozaj chceš obnoviť pôvodný dataset slov?")) {
-                wordDatabase = [...DEFAULT_WORD_DATABASE];
-                localStorage.removeItem('sklabikar_custom_dataset');
-                filterAvailableWords();
-                loadCurrentWord();
-                alert('Dataset bol obnovený.');
-            }
-        }
-
-        // Filter words strictly to those containing ONLY selected letters for the active profile
-        function filterAvailableWords() {
-            availableWords = wordDatabase.filter(item => {
-                if (currentFilter !== 'all' && item.category !== currentFilter) {
-                    return false;
-                }
-                
-                // Split into letter tokens (handling 'CH' as single token)
-                const tokens = splitWordToTokens(item.word);
-                return tokens.every(char => knownLetters.has(char));
-            });
-
-            if (currentIndex >= availableWords.length) {
-                currentIndex = 0;
-            }
-        }
-
-        function switchMode(mode) {
-            currentMode = mode;
-            const expBtn = document.getElementById('modeExplorerBtn');
-            const puzBtn = document.getElementById('modePuzzleBtn');
-            const setBtn = document.getElementById('modeSettingsBtn');
-            const gameView = document.getElementById('gameView');
-            const settingsView = document.getElementById('settingsView');
-            const poolContainer = document.getElementById('scrambledPoolContainer');
-            const instr = document.getElementById('instructionText');
-
-            [expBtn, puzBtn, setBtn].forEach(b => {
-                b.className = "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all text-slate-600 hover:text-slate-800";
-            });
-
-            if (mode === 'settings') {
-                setBtn.className = "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all bg-brand-orange text-white shadow-md";
-                gameView.classList.add('hidden');
-                settingsView.classList.remove('hidden');
-            } else {
-                gameView.classList.remove('hidden');
-                settingsView.classList.add('hidden');
-
-                if (mode === 'explorer') {
-                    expBtn.className = "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all bg-brand-blue text-white shadow-md";
-                    poolContainer.classList.add('hidden');
-                    instr.innerText = "Klikni na písmenko a vypočuj si jeho hlásku!";
-                } else {
-                    puzBtn.className = "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-xs sm:text-base transition-all bg-brand-green text-white shadow-md";
-                    poolContainer.classList.remove('hidden');
-                    instr.innerText = "Usporiadaj písmenká do správneho poradia!";
-                }
-                loadCurrentWord();
-            }
-
-            audioMgr.playEffect('click');
-        }
-
-        function filterCategory(cat) {
-            currentFilter = cat;
-            document.querySelectorAll('.cat-pill').forEach(btn => {
-                btn.classList.remove('bg-brand-purple', 'text-white', 'border-purple-800');
-                btn.classList.add('bg-white', 'text-slate-700', 'border-slate-200');
-            });
-            const activeBtn = document.getElementById(`cat-${cat}`);
-            if (activeBtn) {
-                activeBtn.classList.remove('bg-white', 'text-slate-700', 'border-slate-200');
-                activeBtn.classList.add('bg-brand-purple', 'text-white', 'border-purple-800');
-            }
-
-            filterAvailableWords();
-            currentIndex = 0;
-            loadCurrentWord();
-            audioMgr.playEffect('click');
-        }
-
-        function loadCurrentWord() {
-            const noWordsView = document.getElementById('noWordsView');
-            const wordArea = document.getElementById('wordArea');
-            const navControls = document.getElementById('navControls');
-            const categoryBadge = document.getElementById('categoryBadge');
-            const wordCounter = document.getElementById('wordCounter');
-
-            if (availableWords.length === 0) {
-                noWordsView.classList.remove('hidden');
-                wordArea.classList.add('hidden');
-                navControls.classList.add('hidden');
-                wordCounter.innerText = "Dostupné slová: 0";
-                return;
-            }
-
-            noWordsView.classList.add('hidden');
-            wordArea.classList.remove('hidden');
-            navControls.classList.remove('hidden');
-
-            const wordObj = availableWords[currentIndex];
-
-            categoryBadge.innerHTML = `<i class="fa-solid fa-tag"></i> ${wordObj.categoryLabel}`;
-            wordCounter.innerText = `Slovo ${currentIndex + 1} / ${availableWords.length}`;
-            
-            // Illustration rendering (supports SVG string, local image path or external URL)
-            const box = document.getElementById('illustrationBox');
-            if (wordObj.svg) {
-                box.innerHTML = wordObj.svg;
-            } else if (wordObj.image) {
-                box.innerHTML = `<img src="${wordObj.image}" alt="${wordObj.word}" class="max-w-full max-h-full object-contain rounded-2xl" onerror="this.onerror=null; this.src='https://placehold.co/200x200/FFD166/1E293B?text=${wordObj.word}';">`;
-            } else {
-                box.innerHTML = `<div class="text-4xl font-black text-brand-purple">${wordObj.word}</div>`;
-            }
-
-            document.getElementById('imageContainer').style.borderColor = wordObj.color || '#FFD166';
-
-            if (currentMode === 'explorer') {
-                renderExplorerMode(wordObj);
-            } else if (currentMode === 'puzzle') {
-                setupPuzzleMode(wordObj);
-            }
-        }
-
-        function getCurrentWordObj() {
-            return availableWords[currentIndex] || null;
-        }
-
-        // Explorer view rendering
-        function renderExplorerMode(wordObj) {
-            const wordDisplay = document.getElementById('wordDisplay');
-            wordDisplay.innerHTML = '';
-
-            const tokens = splitWordToTokens(wordObj.word);
-            const cardColors = ['#EF476F', '#FF9F1C', '#FFD166', '#06D6A0', '#118AB2', '#8338EC'];
-
-            tokens.forEach((token, idx) => {
-                const color = cardColors[idx % cardColors.length];
-                const card = document.createElement('button');
-                const isDouble = token.length > 1; // e.g. 'CH'
-                card.className = `letter-card ${isDouble ? 'w-16 sm:w-28' : 'w-12 sm:w-20'} h-16 sm:h-24 bg-white rounded-2xl border-4 text-2xl sm:text-5xl font-black flex items-center justify-center cursor-pointer btn-bounce shadow-lg`;
-                card.style.borderColor = color;
-                card.style.color = color;
-                card.innerText = token;
-
-                card.onclick = () => {
-                    card.classList.add('animate-wiggle');
-                    setTimeout(() => card.classList.remove('animate-wiggle'), 400);
-                    audioMgr.speakText(token, true);
-                };
-
-                wordDisplay.appendChild(card);
-            });
-        }
-
-        // Puzzle mode setup & Universal Drag/Drop + Tap mechanics
-        function setupPuzzleMode(wordObj) {
-            const targetTokens = splitWordToTokens(wordObj.word);
-            puzzleState.placedLetters = new Array(targetTokens.length).fill(null);
-
-            let scrambled = [...targetTokens];
-            for (let i = scrambled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [scrambled[i], scrambled[j]] = [scrambled[j], scrambled[i]];
-            }
-
-            puzzleState.scrambledTiles = scrambled.map((token, id) => ({
-                id: `tile-${token}-${id}-${Math.random()}`,
-                char: token,
-                placed: false
-            }));
-
-            renderPuzzleSlots();
-            renderPuzzlePool();
-        }
-
-        function renderPuzzleSlots() {
-            const wordDisplay = document.getElementById('wordDisplay');
-            wordDisplay.innerHTML = '';
-
-            puzzleState.placedLetters.forEach((placed, slotIdx) => {
-                const isDouble = placed && placed.char.length > 1;
-                const slot = document.createElement('div');
-                slot.dataset.slotIndex = slotIdx;
-                slot.className = `slot-box ${isDouble ? 'w-16 sm:w-28' : 'w-12 sm:w-20'} h-16 sm:h-24 rounded-2xl border-4 border-dashed ${placed ? 'border-brand-blue bg-blue-50' : 'border-slate-300 bg-slate-100'} flex items-center justify-center text-2xl sm:text-5xl font-black transition-all relative`;
-
-                if (placed) {
-                    slot.innerText = placed.char;
-                    slot.style.color = '#118AB2';
-                    slot.classList.add('cursor-pointer', 'bg-white', 'border-solid', 'shadow-md');
-                    slot.onclick = () => removeLetterFromSlot(slotIdx);
-                } else {
-                    slot.innerText = '';
-                }
-
-                wordDisplay.appendChild(slot);
-            });
-        }
-
-        function renderPuzzlePool() {
-            const letterPool = document.getElementById('letterPool');
-            letterPool.innerHTML = '';
-
-            puzzleState.scrambledTiles.forEach((tile) => {
-                if (!tile.placed) {
-                    const isDouble = tile.char.length > 1;
-                    const card = document.createElement('div');
-                    card.id = tile.id;
-                    card.className = `letter-card ${isDouble ? 'w-16 sm:w-24' : 'w-12 sm:w-16'} h-16 sm:h-20 bg-amber-400 text-white rounded-2xl border-b-4 border-amber-600 text-2xl sm:text-4xl font-black flex items-center justify-center cursor-pointer btn-bounce shadow-md select-none`;
-                    card.innerText = tile.char;
-
-                    makeElementDraggable(card, tile);
-                    letterPool.appendChild(card);
-                }
-            });
-        }
-
-        // Pointer-Events Drag & Drop (Mouse, Touch, Stylus, SmartBoard)
-        function makeElementDraggable(element, tileData) {
-            let startX = 0, startY = 0;
-            let isDragging = false;
-            let ghost = null;
-
-            const onPointerDown = (e) => {
-                startX = e.clientX;
-                startY = e.clientY;
-                isDragging = false;
-
-                element.setPointerCapture(e.pointerId);
-                element.addEventListener('pointermove', onPointerMove);
-                element.addEventListener('pointerup', onPointerUp);
-            };
-
-            const onPointerMove = (e) => {
-                const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
-                if (dist > 8 && !isDragging) {
-                    isDragging = true;
-                    ghost = element.cloneNode(true);
-                    ghost.classList.add('drag-ghost');
-                    document.body.appendChild(ghost);
-                    element.style.opacity = '0.3';
-                }
-
-                if (isDragging && ghost) {
-                    ghost.style.left = `${e.clientX}px`;
-                    ghost.style.top = `${e.clientY}px`;
-                    highlightSlotAtPosition(e.clientX, e.clientY);
-                }
-            };
-
-            const onPointerUp = (e) => {
-                element.releasePointerCapture(e.pointerId);
-                element.removeEventListener('pointermove', onPointerMove);
-                element.removeEventListener('pointerup', onPointerUp);
-
-                clearSlotHighlights();
-
-                if (isDragging) {
-                    if (ghost) ghost.remove();
-                    element.style.opacity = '1';
-
-                    const droppedSlot = getSlotAtPosition(e.clientX, e.clientY);
-                    if (droppedSlot !== null) {
-                        placeTileInSpecificSlot(tileData, droppedSlot);
-                    }
-                } else {
-                    placeLetterInSlot(tileData);
-                }
-            };
-
-            element.addEventListener('pointerdown', onPointerDown);
-        }
-
-        function highlightSlotAtPosition(x, y) {
-            clearSlotHighlights();
-            const slotIdx = getSlotAtPosition(x, y);
-            if (slotIdx !== null) {
-                const slots = document.querySelectorAll('.slot-box');
-                if (slots[slotIdx]) slots[slotIdx].classList.add('drag-over');
-            }
-        }
-
-        function clearSlotHighlights() {
-            document.querySelectorAll('.slot-box').forEach(s => s.classList.remove('drag-over'));
-        }
-
-        function getSlotAtPosition(x, y) {
-            const slots = document.querySelectorAll('.slot-box');
-            for (let i = 0; i < slots.length; i++) {
-                const rect = slots[i].getBoundingClientRect();
-                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                    return i;
-                }
-            }
-            return null;
-        }
-
-        function placeLetterInSlot(tile) {
-            const emptyIdx = puzzleState.placedLetters.findIndex(item => item === null);
-            if (emptyIdx !== -1) {
-                placeTileInSpecificSlot(tile, emptyIdx);
-            }
-        }
-
-        function placeTileInSpecificSlot(tile, slotIdx) {
-            if (puzzleState.placedLetters[slotIdx]) {
-                puzzleState.placedLetters[slotIdx].placed = false;
-            }
-
-            tile.placed = true;
-            puzzleState.placedLetters[slotIdx] = tile;
-            audioMgr.speakText(tile.char, true);
-            
-            renderPuzzleSlots();
-            renderPuzzlePool();
-            
-            // Auto check if all slots filled
-            if (puzzleState.placedLetters.every(item => item !== null)) {
-                checkPuzzleCompletion();
-            }
-        }
-
-        function removeLetterFromSlot(slotIdx) {
-            const tile = puzzleState.placedLetters[slotIdx];
-            if (tile) {
-                tile.placed = false;
-                puzzleState.placedLetters[slotIdx] = null;
-                audioMgr.playEffect('click');
-                renderPuzzleSlots();
-                renderPuzzlePool();
-            }
-        }
-
-        function manualCheckPuzzle() {
-            const isFull = puzzleState.placedLetters.every(item => item !== null);
-            if (!isFull) {
-                audioMgr.playEffect('wrong');
-                alert("Najprv dopln všetky políčka!");
-                return;
-            }
-            checkPuzzleCompletion();
-        }
-
-        function checkPuzzleCompletion() {
-            const wordObj = getCurrentWordObj();
-            if (!wordObj) return;
-
-            const targetWord = wordObj.word.toUpperCase();
-            const formedWord = puzzleState.placedLetters.map(item => item.char).join('');
-
-            if (formedWord === targetWord) {
-                // Correct answer celebration
-                audioMgr.playEffect('correct');
-                setTimeout(() => audioMgr.speakText(targetWord, false), 300);
-
-                if (typeof confetti === 'function') {
-                    confetti({
-                        particleCount: 120,
-                        spread: 80,
-                        origin: { y: 0.6 }
-                    });
-                }
-
-                const wordDisplay = document.getElementById('wordDisplay');
-                wordDisplay.classList.add('pulse-success');
-                setTimeout(() => wordDisplay.classList.remove('pulse-success'), 2000);
-
-            } else {
-                // Incorrect answer: Speak the wrongly created word out loud!
-                audioMgr.playEffect('wrong');
-                const wordDisplay = document.getElementById('wordDisplay');
-                wordDisplay.classList.add('animate-wiggle');
-                setTimeout(() => wordDisplay.classList.remove('animate-wiggle'), 500);
-
-                // Speak misspelled word
-                audioMgr.speakWrongAttempt(formedWord);
-            }
-        }
-
-        // Settings / "Moje písmenká" view logic
-        function renderSettingsGrid() {
-            const grid = document.getElementById('alphabetGrid');
-            grid.innerHTML = '';
-
-            ALL_SLOVAK_LETTERS.forEach(letter => {
-                const isSelected = knownLetters.has(letter);
-                const isDouble = letter.length > 1; // 'CH'
-                const tile = document.createElement('button');
-                tile.className = `p-2.5 sm:p-3 rounded-2xl ${isDouble ? 'text-base sm:text-xl font-black' : 'text-lg sm:text-2xl font-black'} transition-all btn-bounce border-b-4 ${
-                    isSelected 
-                        ? 'bg-brand-green text-white border-emerald-700 shadow-md scale-105' 
-                        : 'bg-slate-100 text-slate-400 border-slate-300 hover:bg-slate-200'
-                }`;
-                tile.innerText = letter;
-
-                tile.onclick = () => {
-                    if (knownLetters.has(letter)) {
-                        knownLetters.delete(letter);
-                    } else {
-                        knownLetters.add(letter);
-                        audioMgr.speakText(letter, true);
-                    }
-                    saveProfilesToStorage();
-                    renderSettingsGrid();
-                    updateSelectedCount();
-                };
-
-                grid.appendChild(tile);
-            });
-
-            updateSelectedCount();
-        }
-
-        function updateSelectedCount() {
-            document.getElementById('selectedLettersCount').innerText = knownLetters.size;
-        }
-
-        function selectAllLetters(enable) {
-            if (enable) {
-                knownLetters = new Set(ALL_SLOVAK_LETTERS);
-            } else {
-                knownLetters.clear();
-            }
-            saveProfilesToStorage();
-            renderSettingsGrid();
-            audioMgr.playEffect('click');
-        }
-
-        function presetBasicLetters() {
-            knownLetters = new Set(BASIC_FIRST_GRADE_PRESET);
-            saveProfilesToStorage();
-            renderSettingsGrid();
-            audioMgr.playEffect('click');
-        }
-
-        function saveAndStartGame() {
-            saveProfilesToStorage();
-            filterAvailableWords();
-            switchMode('explorer');
-        }
-
-        // General Navigation Helpers
-        function playFullWordAudio() {
-            const wordObj = getCurrentWordObj();
-            if (wordObj) {
-                audioMgr.speakText(wordObj.word, false);
-                const img = document.getElementById('imageContainer');
-                img.classList.add('animate-wiggle');
-                setTimeout(() => img.classList.remove('animate-wiggle'), 500);
-            }
-        }
-
-        function nextWord() {
-            if (availableWords.length === 0) return;
-            currentIndex = (currentIndex + 1) % availableWords.length;
-            audioMgr.playEffect('click');
-            loadCurrentWord();
-        }
-
-        function prevWord() {
-            if (availableWords.length === 0) return;
-            currentIndex = (currentIndex - 1 + availableWords.length) % availableWords.length;
-            audioMgr.playEffect('click');
-            loadCurrentWord();
-        }
-
-        function randomWord() {
-            if (availableWords.length === 0) return;
-            let newIdx = Math.floor(Math.random() * availableWords.length);
-            if (newIdx === currentIndex && availableWords.length > 1) {
-                newIdx = (currentIndex + 1) % availableWords.length;
-            }
-            currentIndex = newIdx;
-            audioMgr.playEffect('click');
-            loadCurrentWord();
-        }
-    </script>
+<header class="w-full bg-white border-b-4 border-brand-yellow sticky top-0 z-40 px-3 sm:px-6 py-2.5 shadow-md">
+ <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
+  <div class="flex items-center gap-2 sm:gap-3 cursor-pointer" onclick="switchMode('explorer')">
+   <div class="bg-brand-pink text-white w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-bold shadow-lg -rotate-3">S</div>
+   <div><h1 class="text-xl sm:text-3xl font-bold text-brand-purple leading-none">Sklabikár</h1><p class="text-xs font-semibold text-slate-500">Učíme sa písmenká</p></div>
+  </div>
+  <nav class="flex items-center bg-slate-100 p-1 rounded-2xl border-2 border-slate-200 gap-1">
+   <button id="nav-explorer" onclick="switchMode('explorer')"><i class="fa-solid fa-magnifying-glass mr-1"></i>Prieskumník</button>
+   <button id="nav-puzzle" onclick="switchMode('puzzle')"><i class="fa-solid fa-puzzle-piece mr-1"></i>Skladačka</button>
+   <button id="nav-settings" onclick="switchMode('settings')"><i class="fa-solid fa-sliders mr-1"></i>Moje písmenká</button>
+  </nav>
+ </div>
+</header>
+
+<main class="max-w-5xl w-full mx-auto p-3 sm:p-6 flex-grow flex flex-col justify-center items-center">
+
+<div id="gameView" class="w-full flex flex-col items-center">
+ <div class="flex flex-wrap justify-center gap-2 mb-4">
+  <button onclick="filterCategory('all')" id="cat-all" class="cat-pill"><i class="fa-solid fa-shapes mr-1"></i>Všetky slová</button>
+  <button onclick="filterCategory('animals')" id="cat-animals" class="cat-pill"><i class="fa-solid fa-paw text-brand-orange mr-1"></i>Zvieratká</button>
+  <button onclick="filterCategory('nature')" id="cat-nature" class="cat-pill"><i class="fa-solid fa-tree text-brand-green mr-1"></i>Príroda</button>
+  <button onclick="filterCategory('objects')" id="cat-objects" class="cat-pill"><i class="fa-solid fa-car text-brand-blue mr-1"></i>Veci</button>
+ </div>
+
+ <div class="w-full bg-white rounded-3xl border-4 border-slate-200 p-4 sm:p-8 shadow-xl flex flex-col items-center min-h-[460px] justify-between">
+  <div class="w-full flex flex-wrap justify-between items-center gap-2 mb-2">
+   <div class="flex items-center gap-2">
+    <span id="categoryBadge" class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-semibold text-xs sm:text-sm"></span>
+    <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-semibold text-xs sm:text-sm"><i class="fa-solid fa-user-graduate"></i> <span id="profName"></span></span>
+   </div>
+   <span id="wordCounter" class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-semibold text-xs sm:text-sm"></span>
+  </div>
+
+  <div id="noWordsView" class="hidden my-auto py-8 text-center flex flex-col items-center max-w-md">
+   <div class="w-20 h-20 bg-amber-100 text-brand-orange rounded-full flex items-center justify-center text-4xl mb-4"><i class="fa-solid fa-lock"></i></div>
+   <h3 class="text-xl sm:text-2xl font-bold mb-2">Zatiaľ nemáme slovo</h3>
+   <p class="text-sm sm:text-base text-slate-500 mb-6">Pre vybrané písmenká sa nenašlo žiadne slovo. Označ viac písmeniek v časti „Moje písmenká“.</p>
+   <button onclick="switchMode('settings')" class="bg-brand-orange text-white px-6 py-3 rounded-2xl font-bold border-b-4 border-amber-700 btn-bounce"><i class="fa-solid fa-sliders mr-2"></i>Otvoriť Moje písmenká</button>
+  </div>
+
+  <div id="wordArea" class="w-full flex flex-col items-center my-auto">
+   <div class="relative my-2">
+    <div id="imageContainer" class="w-40 h-40 sm:w-56 sm:h-56 bg-gradient-to-br from-blue-50 to-amber-50 rounded-3xl border-4 border-brand-yellow p-4 flex items-center justify-center overflow-hidden"><div id="illustrationBox" class="w-full h-full flex items-center justify-center"></div></div>
+    <button onclick="playFullWordAudio()" aria-label="Prečítaj celé slovo" class="absolute -bottom-2 -right-2 bg-brand-green text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full border-4 border-white flex items-center justify-center shadow-lg btn-bounce"><i class="fa-solid fa-volume-high text-xl"></i></button>
+   </div>
+   <p id="instructionText" class="mt-3 text-slate-500 font-semibold text-center text-sm sm:text-base"></p>
+   <div id="wordDisplay" class="flex flex-wrap justify-center gap-2 sm:gap-4 my-4 min-h-[70px]"></div>
+   <div id="syllableRow" class="flex flex-wrap justify-center items-center gap-1 sm:gap-2 min-h-[44px]"></div>
+   <div id="poolBox" class="hidden w-full mt-3 pt-4 border-t-2 border-dashed border-slate-200 flex flex-col items-center">
+    <p class="text-sm font-semibold text-slate-400 mb-3">Klikni alebo pretiahni písmenká na správne miesto</p>
+    <div id="letterPool" class="flex flex-wrap justify-center gap-2 sm:gap-3 min-h-[64px] mb-3"></div>
+    <button onclick="manualCheck()" class="bg-brand-green text-white px-6 py-2.5 rounded-2xl font-bold border-b-4 border-emerald-800 btn-bounce"><i class="fa-solid fa-check mr-1"></i>Skontrolovať</button>
+   </div>
+  </div>
+
+  <div id="navControls" class="w-full flex justify-between items-center mt-4 pt-4 border-t border-slate-100">
+   <button onclick="prevWord()" class="bg-slate-100 text-slate-700 px-4 sm:px-6 py-3 rounded-2xl font-bold flex items-center gap-2 border-b-4 border-slate-300 btn-bounce"><i class="fa-solid fa-arrow-left"></i><span>Späť</span></button>
+   <button onclick="randomWord()" class="bg-amber-100 text-amber-800 px-4 py-3 rounded-2xl font-bold flex items-center gap-2 border-b-4 border-amber-300 btn-bounce"><i class="fa-solid fa-dice text-lg"></i><span class="hidden sm:inline">Náhodné</span></button>
+   <button onclick="nextWord()" class="bg-brand-pink text-white px-5 sm:px-7 py-3 rounded-2xl font-bold flex items-center gap-2 border-b-4 border-rose-800 btn-bounce"><span>Ďalšie</span><i class="fa-solid fa-arrow-right"></i></button>
+  </div>
+ </div>
+</div>
+
+<div id="settingsView" class="hidden w-full max-w-4xl bg-white rounded-3xl border-4 border-slate-200 p-5 sm:p-8 shadow-xl flex flex-col gap-6">
+ <div class="bg-amber-50 rounded-2xl p-4 border-2 border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+  <div><h3 class="font-bold text-base sm:text-lg">Profil žiaka</h3><p class="text-sm text-slate-500">Každý žiak má vlastné písmenká a vlastný postup</p></div>
+  <div class="flex items-center gap-2 w-full sm:w-auto">
+   <select id="profileSelect" onchange="changeProfile(this.value)" class="bg-white border-2 border-amber-300 font-semibold rounded-xl px-3 py-2 flex-grow"></select>
+   <button onclick="createNewProfile()" class="bg-brand-green text-white px-3 py-2 rounded-xl font-semibold border-b-2 border-emerald-800 btn-bounce"><i class="fa-solid fa-plus"></i> Nový</button>
+  </div>
+ </div>
+ <div class="text-center"><h2 class="text-2xl sm:text-3xl font-bold">Poznané písmenká</h2>
+  <p class="text-sm text-slate-500 mt-1">Vyber písmenká, ktoré dieťa už pozná. <strong class="text-brand-purple">CH</strong> je samostatné písmenko.</p></div>
+ <div class="flex flex-wrap justify-center gap-2">
+  <button onclick="presetBasic()" class="bg-brand-blue text-white px-4 py-2 rounded-xl font-semibold text-sm border-b-4 border-blue-800 btn-bounce"><i class="fa-solid fa-star mr-1"></i>Základné písmenká</button>
+  <button onclick="selectAll(true)" class="bg-brand-green text-white px-4 py-2 rounded-xl font-semibold text-sm border-b-4 border-emerald-800 btn-bounce">Označiť všetky</button>
+  <button onclick="selectAll(false)" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-semibold text-sm border-b-4 border-slate-300 btn-bounce">Zrušiť všetky</button>
+ </div>
+ <div id="alphabetGrid" class="grid grid-cols-4 sm:grid-cols-7 md:grid-cols-9 gap-2 sm:gap-3"></div>
+
+ <div class="bg-slate-50 rounded-2xl p-4 border-2 border-slate-200">
+  <button class="w-full flex items-center justify-between font-bold text-left" onclick="document.getElementById('dsTools').classList.toggle('hidden')"><span><i class="fa-solid fa-database text-brand-purple mr-2"></i>Vlastné slová a obrázky</span><i class="fa-solid fa-chevron-down text-slate-400"></i></button>
+  <div id="dsTools" class="hidden mt-4 pt-4 border-t border-slate-200 flex flex-col gap-3">
+   <p class="text-sm text-slate-500">Stiahni zoznam slov (JSON), uprav ho a nahraj späť. Každé slovo má <code>word</code>, <code>category</code> (animals, nature, objects) a jedno z <code>emoji</code>, <code>image</code>, <code>svg</code>. Voliteľné: <code>syl</code> (napr. ["MA","ČKA"]).</p>
+   <div class="flex flex-wrap gap-2">
+    <button onclick="exportDataset()" class="bg-slate-200 px-4 py-2 rounded-xl font-semibold text-sm btn-bounce"><i class="fa-solid fa-download mr-1"></i>Stiahnuť</button>
+    <label class="bg-brand-purple text-white px-4 py-2 rounded-xl font-semibold text-sm btn-bounce cursor-pointer"><i class="fa-solid fa-upload mr-1"></i>Nahrať<input type="file" accept=".json" class="hidden" onchange="importDataset(event)"></label>
+    <button onclick="resetDataset()" class="bg-rose-100 text-rose-800 px-4 py-2 rounded-xl font-semibold text-sm btn-bounce"><i class="fa-solid fa-rotate-left mr-1"></i>Obnoviť pôvodné</button>
+   </div>
+  </div>
+ </div>
+
+ <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+  <span class="text-sm font-semibold text-slate-500">Označených písmeniek: <strong id="selCount" class="text-brand-purple"></strong></span>
+  <button onclick="saveAndPlay()" class="w-full sm:w-auto bg-brand-pink text-white px-8 py-3 rounded-2xl font-bold text-base border-b-4 border-rose-800 btn-bounce"><i class="fa-solid fa-play mr-2"></i>Uložiť a hrať</button>
+ </div>
+</div>
+</main>
+
+<footer class="w-full bg-white border-t border-slate-200 py-4 px-4 text-sm font-semibold text-slate-500 mt-6">
+ <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+  <p><strong>Sklabikár</strong> – čítanie a písanie pre prvákov ZŠ</p>
+  <div class="flex items-center gap-4"><a href="mailto:kontakt@sklabikar.sk" class="text-brand-blue hover:underline"><i class="fa-solid fa-envelope"></i> Kontakt</a><span class="text-slate-400">Verzia 3.0</span></div>
+ </div>
+</footer>
+
+<div id="dlg" class="hidden fixed inset-0 z-[10000] bg-slate-900/50 flex items-center justify-center p-4">
+ <div role="dialog" aria-modal="true" class="bg-white rounded-3xl border-4 border-brand-yellow p-6 w-full max-w-sm flex flex-col gap-4 shadow-2xl">
+  <p id="dlgText" class="text-lg font-bold text-center"></p>
+  <input id="dlgInput" class="hidden border-2 border-slate-300 rounded-xl px-3 py-2 font-semibold text-center">
+  <div class="flex gap-2 justify-center">
+   <button id="dlgCancel" class="bg-slate-200 px-5 py-2.5 rounded-2xl font-bold btn-bounce">Zrušiť</button>
+   <button id="dlgOk" class="bg-brand-green text-white px-5 py-2.5 rounded-2xl font-bold border-b-4 border-emerald-800 btn-bounce">OK</button>
+  </div>
+ </div>
+</div>
+<div id="toast" role="status" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[10001] bg-slate-800 text-white px-5 py-3 rounded-2xl font-semibold shadow-xl"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+
+const LETTERS=['A','Á','Ä','B','C','Č','D','Ď','E','É','F','G','H','CH','I','Í','J','K','L','Ĺ','Ľ','M','N','Ň','O','Ó','Ô','P','Q','R','Ŕ','S','Š','T','Ť','U','Ú','V','W','X','Y','Ý','Z','Ž'];
+const BASIC=['A','E','I','O','U','M','P','S','L','V','T','J','R','D','K','B','C','CH'];
+const ORDER=['N','H','Z','Y','Š','Č','Ž','Ť','Ď','Ľ','Ň','F','G','Ä','Ô','Á','É','Í','Ó','Ú','Ý','Ĺ','Ŕ'];
+const CATS={animals:'Zvieratká',nature:'Príroda',objects:'Veci'};
+const VOW=new Set(['A','E','I','O','U','Y','Á','Ä','É','Í','Ó','Ô','Ú','Ý']);
+// Názvy súborov pre písmená s diakritikou (assets/audio/letters/<názov>.mp3), aby sa Č a C nezliali
+const FILEMAP={'Á':'a_dlzen','Ä':'a_dve_bodky','Č':'c_makke','Ď':'d_makke','É':'e_dlzen','Í':'i_dlzen','Ĺ':'l_dlzen','Ľ':'l_makke','Ň':'n_makke','Ó':'o_dlzen','Ô':'o_strieska','Ŕ':'r_dlzen','Š':'s_makke','Ť':'t_makke','Ú':'u_dlzen','Ý':'y_dlzen','Ž':'z_makke'};
+// Hláska (nie názov písmena) pre záložnú syntézu reči. Najlepšie je nahrať vlastné mp3.
+const SOUND={M:'mmm',N:'nnn',S:'sss',Š:'šš',Z:'zzz',Ž:'žž',F:'fff',L:'lll',R:'rrr',V:'vvv',H:'hhh',CH:'chch'};
+
+const W=(word,category,emoji,color)=>({id:word.toLowerCase(),word,category,emoji,color});
+const DEFAULT=[
+ W('CHATA','objects','🛖','#FF9F1C'),W('PES','animals','🐶','#FF9F1C'),W('LES','nature','🌲','#06D6A0'),
+ {id:'osa',word:'OSA',category:'animals',color:'#FFD166',svg:'<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="50" rx="18" ry="30" fill="#FACC15"/><path d="M32 42h36M32 50h36M32 58h36" stroke="#1E293B" stroke-width="4"/><circle cx="50" cy="22" r="10" fill="#1E293B"/><path d="M30 38Q10 20 30 25M70 38Q90 20 70 25" stroke="#38BDF8" stroke-width="3" fill="none"/></svg>'},
+ W('MISA','objects','🥣','#118AB2'),W('MAMA','objects','👩','#EF476F'),W('DOM','objects','🏠','#EF476F'),W('AUTO','objects','🚗','#118AB2'),
+ W('SOVA','animals','🦉','#FFD166'),W('RYBA','animals','🐟','#06D6A0'),W('STROM','nature','🌳','#06D6A0'),W('SLNKO','nature','☀️','#FF9F1C'),
+ W('JABLKO','nature','🍎','#EF476F'),W('LOPTA','objects','⚽','#8338EC'),W('MAČKA','animals','🐱','#8338EC'),W('VLAK','objects','🚆','#EF476F'),
+ W('ŽABA','animals','🐸','#06D6A0'),W('ŠKOLA','objects','🏫','#118AB2'),W('KÔŇ','animals','🐴','#FF9F1C'),W('ĽAD','nature','🧊','#118AB2'),
+ W('ŤAVA','animals','🐪','#FF9F1C'),W('ĎATELINA','nature','🍀','#06D6A0'),W('ČAJ','objects','🍵','#06D6A0'),W('KVET','nature','🌸','#EF476F'),
+ W('HUBA','nature','🍄','#EF476F'),W('MÄSO','objects','🥩','#EF476F'),W('ÚL','objects','🐝','#FFD166'),W('SÝR','objects','🧀','#FFD166'),
+ W('KNIHA','objects','📖','#8338EC'),W('HVIEZDA','nature','⭐','#FFD166')
+];
+
+let db=[...DEFAULT],profiles={},activeId='ziak_1',known=new Set(),filter='all',words=[],idx=0,mode='explorer';
+let pz={placed:[],tiles:[],failed:false,busy:false};
+const prof=()=>profiles[activeId];
+
+function tokens(word){const u=word.toUpperCase(),t=[];for(let i=0;i<u.length;){if(u.substr(i,2)==='CH'){t.push('CH');i+=2}else t.push(u[i++])}return t}
+
+// Delenie na slabiky: samohláska (alebo dvojhláska ia, ie, iu, au) je jadro; spoluhlásky medzi jadrami sa delia
+function syllables(item){
+ if(Array.isArray(item.syl)&&item.syl.length)return item.syl.map(s=>String(s).toUpperCase());
+ const t=tokens(item.word),nuc=[];
+ for(let i=0;i<t.length;i++){if(VOW.has(t[i])){if(['IA','IE','IU','AU'].includes(t[i]+(t[i+1]||''))){nuc.push([i,i+1]);i++}else nuc.push([i,i])}}
+ if(nuc.length<2)return[t.join('')];
+ const cuts=[0];
+ for(let k=1;k<nuc.length;k++){const gap=nuc[k][0]-nuc[k-1][1]-1;cuts.push(gap<=1?nuc[k][0]-gap:nuc[k-1][1]+2)}
+ cuts.push(t.length);
+ return cuts.slice(0,-1).map((c,i)=>t.slice(c,cuts[i+1]).join(''));
+}
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.add('hidden'),2600)}
+function dialog({text,input,ok='OK',cancel=false}){return new Promise(res=>{
+ $('dlgText').textContent=text;const inp=$('dlgInput');inp.classList.toggle('hidden',input===undefined);inp.value=input||'';
+ $('dlgCancel').classList.toggle('hidden',!cancel);$('dlgOk').textContent=ok;$('dlg').classList.remove('hidden');
+ const done=v=>{$('dlg').classList.add('hidden');res(v)};
+ $('dlgOk').onclick=()=>done(input!==undefined?inp.value:true);$('dlgCancel').onclick=()=>done(null);
+ (input!==undefined?inp:$('dlgOk')).focus();
+})}
+
+class Audio2{
+ constructor(){this.s=window.speechSynthesis;this.v=null;this.init();if(this.s)this.s.onvoiceschanged=()=>this.init()}
+ init(){if(!this.s)return;const v=this.s.getVoices();this.v=v.find(x=>/^sk/i.test(x.lang))||v.find(x=>/^cs/i.test(x.lang))||null}
+ speak(text,kind){
+  if(kind==='syl')return this.tts(text.toLowerCase(),.8);
+  const name=kind==='letter'?(FILEMAP[text]||text.toLowerCase()):text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const a=new Audio(`assets/audio/${kind==='letter'?'letters':'words'}/${name}.mp3`);
+  a.play().catch(()=>this.tts(kind==='letter'?(SOUND[text]||text.toLowerCase()):text.toLowerCase(),kind==='letter'?.75:.85));
+ }
+ tts(text,rate=.85){if(!this.s){this.fx('click');return}this.s.cancel();const u=new SpeechSynthesisUtterance(text);if(this.v)u.voice=this.v;u.lang='sk-SK';u.rate=rate;u.pitch=1.15;this.s.speak(u)}
+ fx(type){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);const t=c.currentTime;
+  if(type==='click'){o.frequency.setValueAtTime(450,t);o.frequency.exponentialRampToValueAtTime(850,t+.06);g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.01,t+.06);o.start();o.stop(t+.06)}
+  else if(type==='correct'){o.type='triangle';[523.25,659.25,783.99,1046.5].forEach((f,i)=>o.frequency.setValueAtTime(f,t+i*.1));g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.01,t+.45);o.start();o.stop(t+.45)}
+  else{o.type='sawtooth';o.frequency.setValueAtTime(240,t);o.frequency.setValueAtTime(160,t+.15);g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.01,t+.25);o.start();o.stop(t+.25)}
+ }catch(e){}}
+}
+const audio=new Audio2();
+
+window.addEventListener('DOMContentLoaded',()=>{loadDataset();loadProfiles();renderGrid();filterCategory('all');switchMode('explorer')});
+
+/* ---------- Profily ---------- */
+function newProfile(name){return{name,letters:[...BASIC],stats:{},solved:0}}
+function loadProfiles(){
+ try{profiles=JSON.parse(store.get('sklabikar_profiles'))||{}}catch(e){profiles={}}
+ if(!Object.keys(profiles).length)profiles={ziak_1:newProfile('Žiak 1')};
+ Object.values(profiles).forEach(p=>{p.letters=p.letters||[...BASIC];p.stats=p.stats||{};p.solved=p.solved||0});
+ const a=store.get('sklabikar_active_profile');activeId=profiles[a]?a:Object.keys(profiles)[0];
+ known=new Set(prof().letters);renderProfiles();
+}
+function saveProfiles(){prof().letters=[...known];store.set('sklabikar_profiles',JSON.stringify(profiles));store.set('sklabikar_active_profile',activeId);$('profName').textContent=prof().name}
+function renderProfiles(){const s=$('profileSelect');s.innerHTML='';Object.keys(profiles).forEach(id=>{const o=document.createElement('option');o.value=id;o.textContent=profiles[id].name;o.selected=id===activeId;s.appendChild(o)});$('profName').textContent=prof().name}
+function changeProfile(id){if(!profiles[id])return;saveProfiles();activeId=id;known=new Set(prof().letters);renderProfiles();renderGrid();filterWords();loadWord()}
+async function createNewProfile(){const n=await dialog({text:'Meno nového žiaka',input:'Žiak '+(Object.keys(profiles).length+1),ok:'Pridať',cancel:true});
+ if(n&&n.trim()){const id='ziak_'+Date.now();profiles[id]=newProfile(n.trim());changeProfile(id)}}
+
+/* ---------- Dataset ---------- */
+function loadDataset(){try{const d=JSON.parse(store.get('sklabikar_custom_dataset'));if(Array.isArray(d)&&d.length)db=d}catch(e){}}
+function exportDataset(){const a=document.createElement('a');a.href='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(db,null,2));a.download='sklabikar_dataset.json';document.body.appendChild(a);a.click();a.remove()}
+function importDataset(e){
+ const f=e.target.files[0];if(!f)return;const r=new FileReader();
+ r.onload=()=>{try{
+  const raw=JSON.parse(r.result);if(!Array.isArray(raw))throw 0;
+  const ok=raw.filter(x=>x&&typeof x.word==='string'&&/^[A-ZÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ]+$/i.test(x.word)).map(x=>({...x,word:x.word.toUpperCase(),id:x.id||x.word.toLowerCase(),category:CATS[x.category]?x.category:'objects'}));
+  if(!ok.length)throw 0;
+  db=ok;store.set('sklabikar_custom_dataset',JSON.stringify(db));filterWords();loadWord();
+  toast(`Načítaných slov: ${ok.length}`+(ok.length<raw.length?` (preskočených: ${raw.length-ok.length})`:''));
+ }catch(err){toast('Súbor sa nepodarilo načítať. Skontroluj, či obsahuje zoznam slov.')}e.target.value=''};
+ r.readAsText(f);
+}
+async function resetDataset(){if(await dialog({text:'Naozaj obnoviť pôvodné slová?',ok:'Obnoviť',cancel:true})){db=[...DEFAULT];store.del('sklabikar_custom_dataset');filterWords();loadWord();toast('Pôvodné slová sú späť.')}}
+
+function filterWords(){
+ words=db.filter(i=>(filter==='all'||i.category===filter)&&tokens(i.word).every(c=>known.has(c)));
+ if(idx>=words.length)idx=0;
+}
+
+/* ---------- Režimy ---------- */
+const NAVB='px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-semibold text-sm sm:text-base transition-all ';
+const NAVC={explorer:'bg-brand-blue text-white shadow-md',puzzle:'bg-brand-green text-white shadow-md',settings:'bg-brand-orange text-white shadow-md'};
+function switchMode(m){
+ mode=m;
+ ['explorer','puzzle','settings'].forEach(k=>{$('nav-'+k).className=NAVB+(k===m?NAVC[k]:'text-slate-600 hover:text-slate-800')});
+ $('gameView').classList.toggle('hidden',m==='settings');$('settingsView').classList.toggle('hidden',m!=='settings');
+ if(m!=='settings'){
+  $('poolBox').classList.toggle('hidden',m!=='puzzle');
+  $('instructionText').textContent=m==='explorer'?'Klikni na písmenko alebo slabiku a vypočuj si ju.':'Usporiadaj písmenká do správneho poradia.';
+  loadWord();
+ }
+ audio.fx('click');
+}
+const PILL='cat-pill px-4 py-2 rounded-2xl font-semibold text-sm sm:text-base border-b-4 btn-bounce ';
+function filterCategory(c){
+ filter=c;idx=0;
+ document.querySelectorAll('.cat-pill').forEach(b=>{b.className=PILL+(b.id==='cat-'+c?'bg-brand-purple text-white border-purple-800':'bg-white text-slate-700 border-slate-200')});
+ filterWords();loadWord();
+}
+
+function loadWord(){
+ const none=!words.length;
+ $('noWordsView').classList.toggle('hidden',!none);$('wordArea').classList.toggle('hidden',none);$('navControls').classList.toggle('hidden',none);
+ $('categoryBadge').innerHTML=none?'':'<i class="fa-solid fa-tag"></i> '+(CATS[words[idx].category]||'');
+ if(none){$('wordCounter').textContent='Slová: 0';return}
+ const w=words[idx];
+ $('wordCounter').textContent=`Slovo ${idx+1} / ${words.length}`;
+ const b=$('illustrationBox');
+ if(w.svg)b.innerHTML=w.svg;
+ else if(w.emoji)b.innerHTML=`<div style="font-size:6.5rem;line-height:1" role="img" aria-label="${w.word}">${w.emoji}</div>`;
+ else if(w.image){b.innerHTML='';const im=new Image();im.alt=w.word;im.className='max-w-full max-h-full object-contain rounded-2xl';im.onerror=()=>{im.onerror=null;im.replaceWith(Object.assign(document.createElement('div'),{className:'text-4xl font-bold text-brand-purple',textContent:w.word}))};im.src=w.image;b.appendChild(im)}
+ else b.innerHTML=`<div class="text-4xl font-bold text-brand-purple">${w.word}</div>`;
+ $('imageContainer').style.borderColor=w.color||'#FFD166';
+ if(mode==='explorer'){renderExplorer(w);renderSyllables(w)}else{$('syllableRow').innerHTML='';setupPuzzle(w)}
+}
+
+const COLORS=['#EF476F','#FF9F1C','#D99A00','#06A57C','#118AB2','#8338EC'];
+function renderExplorer(w){
+ const d=$('wordDisplay');d.innerHTML='';
+ tokens(w.word).forEach((t,i)=>{
+  const c=COLORS[i%COLORS.length],card=document.createElement('button');
+  card.className=`tile letter-card ${t.length>1?'w-16 sm:w-28':'w-12 sm:w-20'} h-16 sm:h-24 bg-white rounded-2xl border-4 text-3xl sm:text-5xl flex items-center justify-center btn-bounce`;
+  card.style.borderColor=c;card.style.color=c;card.textContent=t;card.setAttribute('aria-label','Písmeno '+t);
+  card.onclick=()=>{card.classList.add('animate-wiggle');setTimeout(()=>card.classList.remove('animate-wiggle'),400);audio.speak(t,'letter')};
+  d.appendChild(card);
+ });
+}
+function renderSyllables(w){
+ const r=$('syllableRow');r.innerHTML='';
+ syllables(w).forEach((s,i,a)=>{
+  const b=document.createElement('button');b.textContent=s;b.setAttribute('aria-label','Slabika '+s);
+  b.className='tile px-3 py-1.5 rounded-xl text-white text-xl sm:text-3xl btn-bounce border-b-4 border-black/20';b.style.background=COLORS[i%COLORS.length];
+  b.onclick=()=>audio.speak(s,'syl');r.appendChild(b);
+  if(i<a.length-1){const h=document.createElement('span');h.textContent='-';h.className='text-slate-300 text-2xl font-bold';r.appendChild(h)}
+ });
+}
+
+/* ---------- Skladačka ---------- */
+function setupPuzzle(w){
+ const t=tokens(w.word),s=[...t];
+ for(let i=s.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]]}
+ if(t.length>1&&s.join('')===t.join(''))s.reverse();
+ pz={placed:new Array(t.length).fill(null),tiles:s.map((c,i)=>({id:'t'+i+Math.random(),char:c,placed:false})),failed:false,busy:false};
+ renderSlots();renderPool();
+}
+function renderSlots(bad=[]){
+ const d=$('wordDisplay');d.innerHTML='';
+ pz.placed.forEach((p,i)=>{
+  const s=document.createElement('div');
+  const st=bad.includes(i)?'border-brand-pink bg-rose-50 border-solid':p?'border-brand-blue bg-white border-solid shadow-md':'border-slate-300 bg-slate-100 border-dashed';
+  s.className=`tile slot-box ${p&&p.char.length>1?'w-16 sm:w-28':'w-12 sm:w-20'} h-16 sm:h-24 rounded-2xl border-4 ${st} flex items-center justify-center text-3xl sm:text-5xl`;
+  if(p){s.textContent=p.char;s.style.color=bad.includes(i)?'#EF476F':'#118AB2';s.classList.add('cursor-pointer');s.onclick=()=>{if(!pz.busy)removeFromSlot(i)}}
+  d.appendChild(s);
+ });
+}
+function renderPool(){
+ const p=$('letterPool');p.innerHTML='';
+ pz.tiles.filter(t=>!t.placed).forEach(t=>{
+  const c=document.createElement('div');
+  c.className=`tile letter-card ${t.char.length>1?'w-16 sm:w-24':'w-12 sm:w-16'} h-16 sm:h-20 bg-amber-400 text-white rounded-2xl border-b-4 border-amber-600 text-3xl sm:text-4xl flex items-center justify-center cursor-pointer select-none`;
+  c.textContent=t.char;drag(c,t);p.appendChild(c);
+ });
+}
+function drag(el,tile){
+ let sx=0,sy=0,moving=false,ghost=null;
+ const move=e=>{
+  if(!moving&&Math.hypot(e.clientX-sx,e.clientY-sy)>8){moving=true;ghost=el.cloneNode(true);ghost.classList.add('drag-ghost');document.body.appendChild(ghost);el.style.opacity='.3'}
+  if(moving){ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';clearHL();const i=slotAt(e.clientX,e.clientY);if(i!==null)document.querySelectorAll('.slot-box')[i].classList.add('drag-over')}
+ };
+ const up=e=>{
+  el.releasePointerCapture(e.pointerId);el.removeEventListener('pointermove',move);el.removeEventListener('pointerup',up);el.removeEventListener('pointercancel',up);clearHL();
+  if(pz.busy){if(ghost)ghost.remove();return}
+  if(moving){ghost.remove();el.style.opacity='1';if(e.type==='pointerup'){const i=slotAt(e.clientX,e.clientY);if(i!==null)place(tile,i)}}
+  else{const i=pz.placed.indexOf(null);if(i!==-1)place(tile,i)}
+ };
+ el.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;moving=false;el.setPointerCapture(e.pointerId);el.addEventListener('pointermove',move);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up)});
+}
+const clearHL=()=>document.querySelectorAll('.slot-box').forEach(s=>s.classList.remove('drag-over'));
+function slotAt(x,y){const s=document.querySelectorAll('.slot-box');for(let i=0;i<s.length;i++){const r=s[i].getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return i}return null}
+function place(tile,i){
+ if(pz.placed[i])pz.placed[i].placed=false;
+ tile.placed=true;pz.placed[i]=tile;audio.speak(tile.char,'letter');renderSlots();renderPool();
+ if(pz.placed.every(Boolean))checkPuzzle();
+}
+function removeFromSlot(i){const t=pz.placed[i];if(t){t.placed=false;pz.placed[i]=null;audio.fx('click');renderSlots();renderPool()}}
+function manualCheck(){if(!pz.placed.every(Boolean)){audio.fx('wrong');toast('Najprv doplň všetky políčka.');return}checkPuzzle()}
+
+function checkPuzzle(){
+ const w=words[idx];if(!w)return;
+ const target=tokens(w.word),st=prof().stats[w.id]=prof().stats[w.id]||{ok:0,bad:0};
+ const bad=target.map((c,i)=>pz.placed[i].char===c?-1:i).filter(i=>i>=0);
+ if(!bad.length){
+  if(!pz.failed)st.ok++;
+  prof().solved++;saveProfiles();
+  audio.fx('correct');setTimeout(()=>audio.speak(w.word,'word'),300);
+  if(typeof confetti==='function')confetti({particleCount:120,spread:80,origin:{y:.6}});
+  renderSyllables(w);
+  const d=$('wordDisplay');d.classList.add('pulse-success');setTimeout(()=>d.classList.remove('pulse-success'),2000);
+  if(prof().solved%5===0)setTimeout(suggestLetter,1800);
+ }else{
+  pz.failed=true;pz.busy=true;st.bad++;saveProfiles();
+  audio.fx('wrong');renderSlots(bad);
+  setTimeout(()=>audio.tts('Skús to znova!',.9),350);
+  // zlé písmená sa vrátia do zásobníka, správne ostanú na mieste
+  setTimeout(()=>{bad.forEach(i=>{pz.placed[i].placed=false;pz.placed[i]=null});pz.busy=false;renderSlots();renderPool()},1400);
+ }
+}
+async function suggestLetter(){
+ const n=ORDER.find(l=>!known.has(l));if(!n)return;
+ if(await dialog({text:`Výborne, 5 slov zvládnutých! Pridáme písmenko ${n}?`,ok:'Áno',cancel:true})){
+  known.add(n);saveProfiles();renderGrid();filterWords();toast(`Pridané písmenko ${n}.`);
+ }
+}
+
+/* ---------- Moje písmenká ---------- */
+function renderGrid(){
+ const g=$('alphabetGrid');g.innerHTML='';
+ LETTERS.forEach(l=>{
+  const on=known.has(l),b=document.createElement('button');
+  b.className=`tile p-2.5 sm:p-3 rounded-2xl ${l.length>1?'text-lg sm:text-xl':'text-xl sm:text-2xl'} btn-bounce border-b-4 ${on?'bg-brand-green text-white border-emerald-700 shadow-md':'bg-slate-100 text-slate-500 border-slate-300'}`;
+  b.textContent=l;b.setAttribute('aria-pressed',on);
+  b.onclick=()=>{if(known.has(l))known.delete(l);else{known.add(l);audio.speak(l,'letter')}saveProfiles();renderGrid()};
+  g.appendChild(b);
+ });
+ $('selCount').textContent=known.size;
+}
+function selectAll(on){known=on?new Set(LETTERS):new Set();saveProfiles();renderGrid();audio.fx('click')}
+function presetBasic(){known=new Set(BASIC);saveProfiles();renderGrid();audio.fx('click')}
+function saveAndPlay(){saveProfiles();filterWords();switchMode('explorer')}
+
+/* ---------- Navigácia ---------- */
+function playFullWordAudio(){const w=words[idx];if(!w)return;audio.speak(w.word,'word');const i=$('imageContainer');i.classList.add('animate-wiggle');setTimeout(()=>i.classList.remove('animate-wiggle'),500)}
+function nextWord(){if(!words.length)return;idx=(idx+1)%words.length;audio.fx('click');loadWord()}
+function prevWord(){if(!words.length)return;idx=(idx-1+words.length)%words.length;audio.fx('click');loadWord()}
+// Náhodný výber uprednostňuje slová, ktoré dieťaprv nezvládlo
+function randomWord(){
+ if(!words.length)return;
+ const st=prof().stats,w=words.map((x,i)=>{if(i===idx&&words.length>1)return 0;const s=st[x.id]||{};return Math.max(1,1+(s.bad||0)-(s.ok||0))});
+ let r=Math.random()*w.reduce((a,b)=>a+b,0),i=0;
+ for(;i<w.length-1;i++){r-=w[i];if(r<0)break}
+ idx=i;audio.fx('click');loadWord();
+}
+</script>
 </body>
 </html>
