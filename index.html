@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Slabikár - Veselé Písmenká pre Prvákov</title>
+    <title>Sklabikár - Veselé písmenká pre prvákov</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -124,7 +124,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl sm:text-3xl font-black text-brand-purple tracking-wide leading-none">
-                        SLABIKÁR<span class="text-brand-pink">.sk</span>
+                        SKLABIKÁR<span class="text-brand-pink">.sk</span>
                     </h1>
                     <p class="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Učíme sa písmenká</p>
                 </div>
@@ -294,15 +294,15 @@
     </main>
 
     <footer class="w-full bg-white border-t border-slate-200 py-3 px-4 text-center text-xs font-bold text-slate-400 mt-6">
-        <p>Slabikár Pre Prvákov • Prispôsobivá výučba pre PC, Tablety, Mobily a Interaktívne Tabule</p>
+        <p>Sklabikár Pre Prvákov • Prispôsobivá výučba pre PC, Tablety, Mobily a Interaktívne Tabule</p>
     </footer>
 
     <script>
         // Full Slovak alphabet including accented characters
         const ALL_SLOVAK_LETTERS = [
             'A', 'Á', 'Ä', 'B', 'C', 'Č', 'D', 'Ď', 'E', 'É', 'F', 'G', 'H', 'CH',
-            'I', 'Í', 'J', 'K', 'L', 'Ľ', 'M', 'N', 'Ň', 'O', 'Ó', 'Ô', 'P', 'R',
-            'Ŕ', 'S', 'Š', 'T', 'Ť', 'U', 'Ú', 'V', 'Y', 'Ý', 'Z', 'Ž'
+            'I', 'Í', 'J', 'K', 'L', 'Ĺ', 'Ľ', 'M', 'N', 'Ň', 'O', 'Ó', 'Ô', 'P','Q',
+            'R','Ŕ', 'S', 'Š', 'T', 'Ť', 'U', 'Ú', 'V', 'W', 'X', 'Y', 'Ý', 'Z', 'Ž'
         ];
 
         const BASIC_FIRST_GRADE_PRESET = ['A', 'E', 'I', 'O', 'U', 'M', 'P', 'S', 'L', 'V', 'T', 'J', 'R', 'D', 'K', 'B', 'C'];
@@ -537,7 +537,7 @@
 
         // Local Storage handling
         function loadSavedLetters() {
-            const saved = localStorage.getItem('slabikar_known_letters');
+            const saved = localStorage.getItem('sklabikar_known_letters');
             if (saved) {
                 try {
                     knownLetters = new Set(JSON.parse(saved));
@@ -550,7 +550,7 @@
         }
 
         function saveLettersToStorage() {
-            localStorage.setItem('slabikar_known_letters', JSON.stringify(Array.from(knownLetters)));
+            localStorage.setItem('sklabikar_known_letters', JSON.stringify(Array.from(knownLetters)));
         }
 
         // Filter words strictly to those containing ONLY selected letters
