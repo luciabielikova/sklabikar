@@ -103,8 +103,8 @@ function tts(text,rate=.85){if(!synth)return;synth.cancel();const u=new SpeechSy
 // Najprv skúsi nahrávku, ak chýba, povie text syntézou reči
 function say(path,text,rate){new Audio(path).play().catch(()=>tts(text,rate))}
 const ascii=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-const sayWord=()=>{const w=words[idx];if(w)say(`assets/audio/words/${ascii(w.word)}.mp3`,w.word.toLowerCase())};
-const sayLetter=c=>say(`assets/audio/letters/${FILEMAP[c]||c.toLowerCase()}.mp3`,SOUND[c]||c.toLowerCase(),.75);
+const sayWord=()=>{const w=words[idx];if(w)say(`assets/audio/words/${ascii(w.word)}.m4a`,w.word.toLowerCase())};
+const sayLetter=c=>say(`assets/audio/letters/${FILEMAP[c]||c.toLowerCase()}.m4a`,SOUND[c]||c.toLowerCase(),.75);
 function fx(ok){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain(),t=c.currentTime;o.connect(g);g.connect(c.destination);
  if(ok){o.type='triangle';[523,659,784,1047].forEach((f,i)=>o.frequency.setValueAtTime(f,t+i*.1))}else{o.type='sawtooth';o.frequency.setValueAtTime(240,t);o.frequency.setValueAtTime(160,t+.15)}
  g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.01,t+.4);o.start();o.stop(t+.4)}catch(e){}}
