@@ -4,9 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sklabikár</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-<script>tailwind.config={theme:{extend:{colors:{brand:{green:'#06D6A0',blue:'#118AB2',pink:'#EF476F',purple:'#8338EC',orange:'#FF9F1C',yellow:'#FFD166'}}}}}</script>
+
+<style type="text/tailwindcss">
+@theme {
+  --color-brand-green: #06D6A0;
+  --color-brand-blue: #118AB2;
+  --color-brand-pink: #EF476F;
+  --color-brand-purple: #8338EC;
+  --color-brand-orange: #FF9F1C;
+  --color-brand-yellow: #FFD166;
+}
+</style>
 <style>
 body{font-family:ui-rounded,'Arial Rounded MT Bold','Segoe UI',system-ui,Arial,sans-serif;background:#F7F9FC;touch-action:manipulation}
 .tile{font-weight:700}
