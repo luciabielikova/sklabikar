@@ -31,7 +31,12 @@ body{font-family:ui-rounded,'Arial Rounded MT Bold','Segoe UI',system-ui,Arial,s
 .animate-wiggle{animation:wiggle .4s ease-in-out infinite}
 .drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.9;transform:translate(-50%,-50%) scale(1.1)}
 .slot.over{border-color:#06D6A0;background:#E6FFFA}
-button:focus-visible,input:focus-visible{outline:3px solid #8338EC;outline-offset:2px}
+button{transition:transform .08s,filter .15s}
+button:not(:disabled):active{transform:scale(.95);filter:brightness(.92)}
+button[class*="border-b-4"]:not(:disabled):active,.btn:not(:disabled):active{transform:translateY(3px);border-bottom-width:1px!important;margin-bottom:3px}
+button:disabled{opacity:.5}
+.dirty-btn{box-shadow:0 0 0 4px #FF9F1C88}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #8338EC;outline-offset:2px}
 th,td{padding:.4rem .6rem;text-align:left;border-bottom:1px solid #e2e8f0}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -55,12 +60,17 @@ th,td{padding:.4rem .6rem;text-align:left;border-bottom:1px solid #e2e8f0}
   </div>
   <input id="aName" class="inp" placeholder="Meno" autocomplete="username" maxlength="30">
   <input id="aPw" type="password" class="inp" placeholder="Heslo (aspoň 6 znakov)" autocomplete="current-password">
-  <div id="roleBox" class="hidden flex gap-4 justify-center font-semibold">
-   <label><input type="radio" name="role" value="student" checked> Som žiak</label>
-   <label><input type="radio" name="role" value="teacher"> Som učiteľka</label>
+  <div id="roleBox" class="hidden flex flex-col gap-2">
+   <div class="flex gap-4 justify-center font-semibold">
+    <label><input type="radio" name="role" value="student" checked onchange="roleChg()"> Som žiak</label>
+    <label><input type="radio" name="role" value="teacher" onchange="roleChg()"> Som učiteľka</label>
+   </div>
+   <input id="aCode" class="inp hidden" placeholder="Kód pre učiteľky" autocomplete="off">
   </div>
   <p id="aErr" class="text-brand-pink font-semibold text-sm text-center min-h-[1.25rem]"></p>
   <button id="aBtn" onclick="doAuth()" class="btn bg-brand-green">Prihlásiť</button>
+  <button onclick="startGuest()" class="btn bg-brand-orange">Hrať ako hosť</button>
+  <p class="text-xs text-slate-500 text-center">Hosť nemá účet a jeho výsledky sa neukladajú.</p>
  </div>
 
  <!-- Kód triedy (žiak) -->
@@ -69,6 +79,7 @@ th,td{padding:.4rem .6rem;text-align:left;border-bottom:1px solid #e2e8f0}
   <input id="cCode" class="inp text-center text-2xl tracking-widest uppercase" maxlength="10" autocomplete="off">
   <p id="cErr" class="text-brand-pink font-semibold text-sm min-h-[1.25rem]"></p>
   <button onclick="joinClass()" class="btn bg-brand-green">Vstúpiť</button>
+  <button id="noCodeBtn" onclick="playNoCode()" class="hidden btn bg-slate-500">Hrať bez kódu</button>
  </div>
 
  <!-- Hra -->
@@ -85,7 +96,7 @@ th,td{padding:.4rem .6rem;text-align:left;border-bottom:1px solid #e2e8f0}
    </div>
    <div id="wordText" class="tile text-3xl sm:text-4xl text-brand-purple min-h-[44px] tracking-wider"></div>
    <div id="line"></div>
-   <div class="w-full max-w-xl bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-3">
+   <div id="pileBox" class="w-full max-w-xl bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-3">
     <p class="text-sm text-slate-400 font-semibold text-center mb-2">Zásobník</p>
     <div id="pile" class="flex flex-wrap justify-center gap-2 min-h-[56px]"></div>
    </div>
@@ -111,12 +122,12 @@ th,td{padding:.4rem .6rem;text-align:left;border-bottom:1px solid #e2e8f0}
    </div>
 
    <div class="card flex flex-col gap-4">
-    <h2 class="text-xl font-bold">Nastavenia</h2>
+    <div class="flex items-center justify-between"><h2 class="text-xl font-bold">Nastavenia</h2><span id="sDirty" class="hidden text-brand-orange font-bold text-sm">● Neuložené zmeny</span></div>
     <div class="flex flex-wrap gap-x-5 gap-y-2 font-semibold">
-     <label><input type="checkbox" id="lv1"> 1 Počítam hlásky</label>
-     <label><input type="checkbox" id="lv2"> 2 Červené a modré</label>
-     <label><input type="checkbox" id="lv3"> 3 Písmenká</label>
-     <label><input type="checkbox" id="hardCb"> Ťažký režim (kúsky navyše)</label>
+     <label><input type="checkbox" id="lv1" onchange="markDirty('s')"> 1 Počítam hlásky</label>
+     <label><input type="checkbox" id="lv2" onchange="markDirty('s')"> 2 Červené a modré</label>
+     <label><input type="checkbox" id="lv3" onchange="markDirty('s')"> 3 Písmenká</label>
+     <label><input type="checkbox" id="hardCb" onchange="markDirty('s')"> Ťažký režim (kúsky navyše)</label>
     </div>
     <p class="text-sm text-slate-500">Písmenká, ktoré trieda pozná. V 3. úrovni sa objavia len slová zložené z nich.</p>
     <div class="flex flex-wrap gap-2">
@@ -127,29 +138,39 @@ th,td{padding:.4rem .6rem;text-align:left;border-bottom:1px solid #e2e8f0}
     <div id="grid" class="grid grid-cols-4 sm:grid-cols-7 md:grid-cols-9 gap-2"></div>
     <div class="flex items-center justify-between gap-3 flex-wrap">
      <span class="text-sm font-semibold text-slate-500">Označených: <strong id="cnt" class="text-brand-purple"></strong></span>
-     <button onclick="saveSettings()" class="btn bg-brand-pink">Uložiť nastavenia</button>
+     <button id="sSave" onclick="saveSettings()" class="btn bg-brand-pink">Uložiť nastavenia</button>
     </div>
    </div>
 
    <div class="card flex flex-col gap-3">
-    <h2 class="text-xl font-bold">Slová</h2>
-    <div class="grid sm:grid-cols-4 gap-2">
-     <input id="wWord" class="inp uppercase" placeholder="Slovo (napr. SOVA)" maxlength="20">
-     <input id="wEmoji" class="inp" placeholder="Emoji (napr. 🦉)" maxlength="8">
-     <input id="wImg" class="inp" placeholder="Adresa obrázka (nepovinné)">
-     <button onclick="addWord()" class="btn bg-brand-green">Pridať</button>
-    </div>
-    <p class="text-sm text-slate-500">Ak trieda nemá žiadne vlastné slová, hrá sa vstavaný zoznam.</p>
-    <div id="wList" class="flex flex-wrap gap-2"></div>
+    <div class="flex items-center justify-between flex-wrap gap-2"><h2 class="text-xl font-bold">Slová</h2>
+     <div class="flex items-center gap-2"><span id="wDirty" class="hidden text-brand-orange font-bold text-sm">● Neuložené zmeny</span>
+      <button onclick="addRow()" class="btn bg-brand-blue">+ Slovo</button>
+      <button id="wSave" onclick="saveWords()" class="btn bg-brand-pink">Uložiť slová</button></div></div>
+    <p class="text-sm text-slate-500">Bunky upravuješ priamo v tabuľke. Obrázok (do 2 MB) a nahrávka (do 5 MB) sa nahrajú do Supabase po uložení. Ak trieda nemá žiadne slová, hrá sa vstavaný zoznam.</p>
+    <div id="wTable" class="overflow-x-auto text-sm"></div>
    </div>
 
    <div class="card flex flex-col gap-3">
     <div class="flex items-center justify-between"><h2 class="text-xl font-bold">Výsledky</h2><button onclick="loadResults()" class="btn bg-brand-blue">Obnoviť</button></div>
+    <div class="flex flex-wrap gap-2">
+     <select id="rLv" class="inp w-auto" onchange="renderResults()" aria-label="Úroveň"><option value="">Všetky úrovne</option><option value="1">Úroveň 1</option><option value="2">Úroveň 2</option><option value="3">Úroveň 3</option></select>
+     <input id="rWord" class="inp w-auto uppercase" placeholder="Slovo…" oninput="renderResults()" aria-label="Slovo">
+     <select id="rSort" class="inp w-auto" onchange="renderResults()" aria-label="Zoradenie"><option value="last">Naposledy cvičili</option><option value="name">Meno A–Z</option><option value="count">Najviac slov</option><option value="rateAsc">Najnižšia úspešnosť</option><option value="rateDesc">Najvyššia úspešnosť</option></select>
+    </div>
     <div id="res" class="overflow-x-auto text-sm"></div>
    </div>
   </div>
  </div>
 </main>
+<div id="modal" style="display:none" class="fixed inset-0 z-50 bg-black/40 items-center justify-center p-4">
+ <div class="card max-w-sm w-full text-center flex flex-col gap-4">
+  <div class="text-6xl">🎉</div>
+  <h2 class="text-2xl font-bold">Bravo! Precvičil si všetky slová.</h2>
+  <p class="text-slate-600">Chceš začať odznova?</p>
+  <div class="flex gap-3 justify-center"><button onclick="restartRound()" class="btn bg-brand-green">Znova</button><button onclick="closeModal()" class="btn bg-slate-400">Ešte nie</button></div>
+ </div>
+</div>
 <div id="toast" role="status" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white px-5 py-3 rounded-2xl font-semibold shadow-xl"></div>
 
 <script>
@@ -169,7 +190,7 @@ const NAMES={1:'Počítam hlásky',2:'Červené a modré',3:'Písmenká'};
 const LVCOL={1:'bg-brand-blue',2:'bg-brand-pink',3:'bg-brand-green'};
 
 let WORDS=FALLBACK,dbWords=[],hard=false,level=1,idx=0,words=[],pile=[],line=[],done=false,tries=0,known=new Set(BASIC),edKnown=new Set(BASIC);
-let me=null,cls=null,view='auth',activeLevels=[1,2,3],reg=false;
+let doneSet={},finished={},me=null,cls=null,view='auth',activeLevels=[1,2,3],reg=false;
 const tokens=w=>{const u=w.toUpperCase(),t=[];for(let i=0;i<u.length;){const p=u.substr(i,2);if(['CH','DZ','DŽ'].includes(p)){t.push(p);i+=2}else t.push(u[i++])}return t};
 const typeOf=c=>VOW.has(c)?'v':'c';
 const toast=m=>{const t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.add('hidden'),2500)};
@@ -181,16 +202,18 @@ pickVoice();if(synth)synth.onvoiceschanged=pickVoice;
 function tts(text,rate=.85){if(!synth)return;synth.cancel();const u=new SpeechSynthesisUtterance(text);if(voice)u.voice=voice;u.lang='sk-SK';u.rate=rate;u.pitch=1.15;synth.speak(u)}
 function say(path,text,rate){new Audio(path).play().catch(()=>tts(text,rate))}
 const ascii=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-const sayWord=()=>{const w=words[idx];if(w)say(`assets/audio/words/${ascii(w.word)}.m4a`,w.word.toLowerCase())};
+const sayWord=()=>{const w=words[idx];if(!w)return;if(w.audio)new Audio(w.audio).play().catch(()=>tts(w.word.toLowerCase()));else say(`assets/audio/words/${ascii(w.word)}.m4a`,w.word.toLowerCase())};
 const sayLetter=c=>say(`assets/audio/letters/${FILEMAP[c]||c.toLowerCase()}.m4a`,SOUND[c]||c.toLowerCase(),.75);
 function fx(ok){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain(),t=c.currentTime;o.connect(g);g.connect(c.destination);
  if(ok){o.type='triangle';[523,659,784,1047].forEach((f,i)=>o.frequency.setValueAtTime(f,t+i*.1))}else{o.type='sawtooth';o.frequency.setValueAtTime(240,t);o.frequency.setValueAtTime(160,t+.15)}
  g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.01,t+.4);o.start();o.stop(t+.4)}catch(e){}}
 
 /* ---------- Účty ---------- */
+const BUCKET='sklabikar',dirty={s:false,w:false};
 // Supabase Auth chce e-mail, preto z mena vyrobíme technický e-mail. Používateľ vidí len meno.
 const mail=n=>ascii(n.trim()).replace(/[^a-z0-9._-]/g,'')+'@sklabikar.example.com';
 const aErr=m=>{$('aErr').textContent=m||''};
+function roleChg(){$('aCode').classList.toggle('hidden',document.querySelector('input[name=role]:checked').value!=='teacher')}
 function setReg(r){
  reg=r;aErr();
  $('roleBox').classList.toggle('hidden',!r);
@@ -204,37 +227,52 @@ async function doAuth(){
  if(!/[a-z0-9]/.test(ascii(name))){aErr('Zadaj meno (aspoň jedno písmeno alebo číslo).');return}
  if(pw.length<6){aErr('Heslo musí mať aspoň 6 znakov.');return}
  $('aBtn').disabled=true;
- let r;
- if(reg){
-  const role=document.querySelector('input[name=role]:checked').value;
-  r=await sb.auth.signUp({email:mail(name),password:pw,options:{data:{name,role}}});
- }else r=await sb.auth.signInWithPassword({email:mail(name),password:pw});
- $('aBtn').disabled=false;
- if(r.error){
-  const m=r.error.message;
-  aErr(/invalid login/i.test(m)?'Nesprávne meno alebo heslo.':/already/i.test(m)?'Toto meno už niekto používa.':m);return;
- }
- if(!r.data.session){aErr('Účet vznikol, ale Supabase žiada potvrdenie e-mailom. Vypni „Confirm email“.');return}
- $('aPw').value='';boot();
+ try{
+  let r;
+  if(reg){
+   const teacher=document.querySelector('input[name=role]:checked').value==='teacher',code=$('aCode').value.trim();
+   if(teacher){const ok=await sb.rpc('teacher_code_ok',{code});if(!ok.data){aErr('Nesprávny kód pre učiteľky.');return}}
+   r=await sb.auth.signUp({email:mail(name),password:pw,options:{data:{name}}});
+   if(!r.error&&r.data.session&&teacher){
+    const c=await sb.rpc('claim_teacher',{code});
+    if(c.error){aErr('Účet vznikol, ale kód pre učiteľky sa nepodarilo overiť. Prihlás sa ako žiak a skús to znova.');return}
+   }
+  }else r=await sb.auth.signInWithPassword({email:mail(name),password:pw});
+  if(r.error){
+   const m=r.error.message;
+   aErr(/invalid login/i.test(m)?'Nesprávne meno alebo heslo.':/already/i.test(m)?'Toto meno už niekto používa.':m);return;
+  }
+  if(!r.data.session){aErr('Účet vznikol, ale Supabase žiada potvrdenie e-mailom. Vypni „Confirm email“.');return}
+  $('aPw').value='';$('aCode').value='';boot();
+ }finally{$('aBtn').disabled=false}
 }
 function logout(){sb.auth.signOut().then(()=>{cls=null;boot()})}
 $('aPw').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth()});
 $('cCode').addEventListener('keydown',e=>{if(e.key==='Enter')joinClass()});
 
+function startGuest(){me={role:'guest',name:'Hosť'};cls=null;openCode()}
+function openCode(){
+ $('noCodeBtn').classList.toggle('hidden',me.role!=='guest');
+ if(me.role==='guest')$('cCode').value=store.get('sklabikar_guest_code')||'';
+ show('code');
+}
+async function playNoCode(){cls=null;await initGame(true)}
+
 async function boot(){
  const {data:{session}}=await sb.auth.getSession();
  if(!session){me=null;cls=null;setReg(false);show('auth');return}
  const u=session.user,m=u.user_metadata||{};
- me={id:u.id,name:m.name||'?',role:m.role==='teacher'?'teacher':'student',code:m.class_code||null};
+ const t=await sb.from('teachers').select('id').eq('id',u.id).maybeSingle();
+ me={id:u.id,name:m.name||'?',role:t.data?'teacher':'student',code:m.class_code||null};
  cls=null;
  if(me.role==='teacher'){
   const {data}=await sb.from('classes').select('*').eq('teacher_id',me.id).order('created_at').limit(1);
   cls=data&&data[0]||null;
-  if(cls)await initGame(false);
+  await initGame(false);
   openPanel();
  }else{
   if(me.code){const {data}=await sb.from('classes').select('*').eq('code',me.code).maybeSingle();cls=data}
-  if(cls)await initGame(true);else show('code');
+  if(cls)await initGame(true);else openCode();
  }
 }
 async function joinClass(){
@@ -242,9 +280,24 @@ async function joinClass(){
  const {data}=await sb.from('classes').select('*').eq('code',c).maybeSingle();
  if(!data){$('cErr').textContent='Takú triedu nepoznáme.';return}
  $('cErr').textContent='';
- await sb.auth.updateUser({data:{class_code:c}});
- me.code=c;cls=data;await initGame(true);
+ if(me.role==='guest')store.set('sklabikar_guest_code',c);
+ else{await sb.auth.updateUser({data:{class_code:c}});me.code=c}
+ cls=data;await initGame(true);
 }
+
+/* ---------- Neuložené zmeny ---------- */
+function paintDirty(){
+ $('sDirty').classList.toggle('hidden',!dirty.s);$('sSave').classList.toggle('dirty-btn',dirty.s);
+ $('wDirty').classList.toggle('hidden',!dirty.w);$('wSave').classList.toggle('dirty-btn',dirty.w);
+}
+function markDirty(k){dirty[k]=true;paintDirty()}
+function guard(){
+ if(!(dirty.s||dirty.w))return true;
+ if(!confirm('Máš neuložené zmeny. Naozaj ich chceš zahodiť?'))return false;
+ dirty.s=dirty.w=false;paintDirty();return true;
+}
+const go=fn=>{if(guard())fn()};
+window.addEventListener('beforeunload',e=>{if(dirty.s||dirty.w){e.preventDefault();e.returnValue=''}});
 
 /* ---------- Navigácia ---------- */
 const NAVB='px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-semibold text-sm sm:text-base transition-all ';
@@ -256,27 +309,30 @@ function renderNav(){
  const n=$('nav'),ub=$('userbar');n.innerHTML='';ub.innerHTML='';
  n.classList.toggle('hidden',!me);
  if(!me)return;
- const add=(t,fn,on,col)=>{const b=document.createElement('button');b.className=NAVB+(on?col+' text-white shadow-md':'text-slate-600');b.textContent=t;b.onclick=fn;n.appendChild(b)};
- if(cls)(me.role==='teacher'?[1,2,3]:activeLevels).forEach(k=>add(`${k} ${NAMES[k]}`,()=>setLevel(k),view==='game'&&level===k,LVCOL[k]));
- if(me.role==='teacher')add('⚙ Učiteľka',openPanel,view==='teacher','bg-brand-orange');
+ const add=(t,fn,on,col)=>{const b=document.createElement('button');b.className=NAVB+(on?col+' text-white shadow-md':'text-slate-600');b.textContent=t;b.onclick=()=>go(fn);n.appendChild(b)};
+ if(cls||me.role==='guest')(me.role==='teacher'?[1,2,3]:activeLevels).forEach(k=>add(`${k} ${NAMES[k]}`,()=>setLevel(k),view==='game'&&level===k,LVCOL[k]));
+ if(me.role==='teacher')add('⚙ Učiteľka',()=>{if(view!=='teacher')openPanel()},view==='teacher','bg-brand-orange');
  const s=document.createElement('span');s.textContent=me.name;ub.appendChild(s);
- if(me.role==='student'){const c=document.createElement('button');c.textContent='Trieda';c.className='underline';c.onclick=()=>show('code');ub.appendChild(c)}
- const o=document.createElement('button');o.textContent='Odhlásiť';o.className='underline';o.onclick=logout;ub.appendChild(o);
+ if(me.role!=='teacher'){const c=document.createElement('button');c.textContent='Trieda';c.className='underline';c.onclick=openCode;ub.appendChild(c)}
+ const o=document.createElement('button');o.textContent=me.role==='guest'?'Ukončiť':'Odhlásiť';o.className='underline';o.onclick=()=>go(logout);ub.appendChild(o);
 }
 
 /* ---------- Hra ---------- */
 async function loadWords(){
  WORDS=FALLBACK;dbWords=[];
- if(cls){const {data}=await sb.from('class_words').select('id,word,emoji,image_url').eq('class_code',cls.code).order('word');dbWords=data||[]}
- if(dbWords.length)WORDS=dbWords.map(x=>({word:x.word.toUpperCase(),emoji:x.emoji,image:x.image_url||null}));
+ if(cls){const {data}=await sb.from('class_words').select('id,word,emoji,image_url,audio_url').eq('class_code',cls.code).order('word');dbWords=data||[]}
+ if(dbWords.length)WORDS=dbWords.map(x=>({word:x.word.toUpperCase(),emoji:x.emoji,image:x.image_url||null,audio:x.audio_url||null}));
  else await loadCustomWords();
 }
-async function initGame(go){
- known=new Set(Array.isArray(cls.known_letters)?cls.known_letters:BASIC);
- hard=!!cls.hard_mode;
- activeLevels=(cls.active_levels||[]).map(Number).filter(k=>k>=1&&k<=3);
+function applyCls(){
+ const c=cls||{};
+ known=new Set(Array.isArray(c.known_letters)?c.known_letters:BASIC);
+ hard=!!c.hard_mode;
+ activeLevels=(c.active_levels||[]).map(Number).filter(k=>k>=1&&k<=3);
  if(!activeLevels.length)activeLevels=[1,2,3];
- await loadWords();
+}
+async function initGame(go){
+ applyCls();await loadWords();
  if(go){const l=parseInt(store.get('sklabikar_level'));setLevel(activeLevels.includes(l)?l:activeLevels[0])}
 }
 const INSTR={1:'Klikni na štvorček a počúvaj hlásku. Ťahaj štvorčeky na čiaru v poradí, ako ide slovo.',2:'Červený kruh je samohláska, modrý štvorček spoluhláska. Klikni, počúvaj a ťahaj ich na čiaru v správnom poradí.',3:'Poskladaj slovo. Každé písmenko ide na svoje miesto.'};
@@ -329,7 +385,7 @@ function render(bad=[]){
 
 /* ---------- Presúvanie ---------- */
 function slotAt(x,y){const s=document.querySelectorAll('.slot');for(let i=0;i<s.length;i++){const r=s[i].getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return i}return null}
-function overLine(x,y){const r=$('line').getBoundingClientRect();return x>=r.left-20&&x<=r.right+20&&y>=r.top-50&&y<=r.bottom+30}
+function inBox(id,x,y,m){const r=$(id).getBoundingClientRect();return x>=r.left-m&&x<=r.right+m&&y>=r.top-m&&y<=r.bottom+m}
 function drag(el,chip,src){
  let sx=0,sy=0,moving=false,ghost=null;
  const move=e=>{
@@ -342,9 +398,12 @@ function drag(el,chip,src){
   if(ghost){ghost.remove();ghost=null}el.style.opacity='1';
   if(e.type==='pointercancel')return;
   if(!moving){tap(chip,src);return}
-  if(level===3){const i=slotAt(e.clientX,e.clientY);if(i!==null)place(chip,i);else if(src==='line')back(chip)}
-  else if(overLine(e.clientX,e.clientY))place(chip,insertAt(e.clientX,e.clientY,el));
-  else if(src==='line')back(chip);
+  const x=e.clientX,y=e.clientY;
+  if(level===3){const i=slotAt(x,y);if(i!==null){place(chip,i);return}}
+  else if(inBox('line',x,y,20)){place(chip,insertAt($('line'),x,y,el));return}
+  // pustené v zásobníku: žetón ostane presne tam, kde ho používateľ pustil
+  if(inBox('pileBox',x,y,10)){toPile(chip,insertAt($('pile'),x,y,el));return}
+  if(src==='line')toPile(chip,pile.length);
  };
  el.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;moving=false;el.setPointerCapture(e.pointerId);el.addEventListener('pointermove',move);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up)});
 }
@@ -352,8 +411,9 @@ function tap(chip,src){
  sayLetter(chip.char);
  if(level===3&&src==='pile')place(chip,line.indexOf(null));
 }
-function insertAt(x,y,skip){
- const cs=[...$('line').children].filter(c=>c!==skip).map(c=>c.getBoundingClientRect());
+// Kam do kontajnera patrí pustený žetón (podľa riadku a vodorovnej polohy)
+function insertAt(cont,x,y,skip){
+ const cs=[...cont.children].filter(c=>c!==skip).map(c=>c.getBoundingClientRect());
  if(!cs.length)return 0;
  const b=cs.reduce((a,c)=>Math.abs(y-(a.top+a.height/2))<=Math.abs(y-(c.top+c.height/2))?a:c);
  return cs.filter(r=>r.top<b.top-5||(Math.abs(r.top-b.top)<=5&&r.left+r.width/2<x)).length;
@@ -386,16 +446,20 @@ function place(chip,i){
   if(i<0)return;
   const from=line.indexOf(chip),old=line[i];
   if(old===chip)return;
-  if(from>=0)line[from]=old||null;else{pile=pile.filter(c=>c!==chip);if(old)pile.push(old)}
+  if(from>=0)line[from]=old||null;
+  else{const pi=pile.indexOf(chip);pile.splice(pi,1);if(old)pile.splice(pi,0,old)}
   line[i]=chip;
  }
  render();
  if((level===3&&line.every(Boolean))||(level<3&&!hard&&!pile.length))check();
 }
-function back(chip){
- const i=line.indexOf(chip);if(i<0)return;done=false;
- if(level<3)line.splice(i,1);else line[i]=null;
- pile.push(chip);pile.sort((a,b)=>a.id-b.id);render();
+function toPile(chip,i){
+ done=false;
+ const li=line.indexOf(chip);
+ if(li>=0){if(level<3)line.splice(li,1);else line[li]=null}
+ pile=pile.filter(c=>c!==chip);
+ pile.splice(Math.min(i,pile.length),0,chip);
+ render();
 }
 
 /* ---------- Kontrola a zápis výsledku ---------- */
@@ -404,6 +468,12 @@ async function saveResult(w){
  const {error}=await sb.from('student_results').insert({class_code:cls.code,student_name:me.name,level,word:w.word,is_first_try:tries===0});
  if(error)console.warn('Výsledok sa nezapísal:',error.message);
 }
+function markDone(w){
+ const D=doneSet[level]??=new Set();D.add(w.word);
+ if(!finished[level]&&words.every(x=>D.has(x.word))){finished[level]=true;setTimeout(()=>{$('modal').style.display='flex'},1400)}
+}
+const closeModal=()=>{$('modal').style.display='none'};
+function restartRound(){doneSet[level]=new Set();finished[level]=false;idx=0;closeModal();setup()}
 function check(){
  if(!words.length||done)return;
  const w=words[idx],t=tokens(w.word),bad=[];
@@ -412,7 +482,7 @@ function check(){
  line.forEach((c,i)=>{if(c&&c.char!==t[i])bad.push(i)});
  if(!bad.length&&line.length!==t.length)bad.push(-1);
  if(!bad.length){
-  done=true;fx(true);setTimeout(sayWord,300);render();saveResult(w);
+  done=true;fx(true);setTimeout(sayWord,300);render();saveResult(w);markDone(w);
   if(typeof confetti==='function')confetti({particleCount:120,spread:80,origin:{y:.6}});
   return;
  }
@@ -422,6 +492,7 @@ function check(){
 }
 
 /* ---------- Učiteľka ---------- */
+let rows=[],delRows=[],trash=[],resData=[];
 async function createClass(){
  const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',code=Array.from({length:5},()=>A[Math.random()*A.length|0]).join('');
  const {data,error}=await sb.from('classes').insert({teacher_id:me.id,code,known_letters:BASIC,active_levels:[1,2,3],hard_mode:false}).select().single();
@@ -431,12 +502,13 @@ async function createClass(){
 function openPanel(){
  show('teacher');
  $('noClass').classList.toggle('hidden',!!cls);$('tBody').classList.toggle('hidden',!cls);
+ dirty.s=dirty.w=false;paintDirty();
  if(!cls)return;
  $('tCode').textContent=cls.code;
  edKnown=new Set(known);
  [1,2,3].forEach(k=>$('lv'+k).checked=activeLevels.includes(k));
  $('hardCb').checked=hard;
- renderGrid();renderWords();loadResults();
+ renderGrid();loadRows();renderWords();loadResults();
 }
 function renderGrid(){
  const g=$('grid');g.innerHTML='';
@@ -444,59 +516,121 @@ function renderGrid(){
   const on=edKnown.has(l),b=document.createElement('button');
   b.className=`tile p-3 rounded-2xl text-xl sm:text-2xl border-b-4 ${on?'bg-brand-green text-white border-emerald-700':'bg-slate-100 text-slate-500 border-slate-300'}`;
   b.textContent=l;b.setAttribute('aria-pressed',on);
-  b.onclick=()=>{if(edKnown.has(l))edKnown.delete(l);else{edKnown.add(l);sayLetter(l)}renderGrid()};
+  b.onclick=()=>{if(edKnown.has(l))edKnown.delete(l);else{edKnown.add(l);sayLetter(l)}markDirty('s');renderGrid()};
   g.appendChild(b);
  });
  $('cnt').textContent=edKnown.size;
 }
-function preset(a){edKnown=new Set(a);renderGrid()}
+function preset(a){edKnown=new Set(a);markDirty('s');renderGrid()}
 async function saveSettings(){
  const lv=[1,2,3].filter(k=>$('lv'+k).checked);
  if(!lv.length){toast('Vyber aspoň jednu úroveň.');return}
  const upd={known_letters:[...edKnown],active_levels:lv,hard_mode:$('hardCb').checked};
  const {data,error}=await sb.from('classes').update(upd).eq('id',cls.id).select().single();
  if(error){toast('Nepodarilo sa uložiť: '+error.message);return}
- cls=data;await initGame(false);renderNav();toast('Uložené.');
+ cls=data;applyCls();dirty.s=false;paintDirty();renderNav();toast('Nastavenia uložené.');
 }
+
+/* --- Slová: tabuľka s úpravou na mieste --- */
+function loadRows(){
+ rows=dbWords.map(x=>({id:x.id,word:x.word,emoji:x.emoji||'',image_url:x.image_url||'',audio_url:x.audio_url||''}));
+ delRows=[];trash=[];dirty.w=false;paintDirty();
+}
+function addRow(){rows.unshift({id:null,word:'',emoji:'',image_url:'',audio_url:''});markDirty('w');renderWords();const f=$('wTable').querySelector('input[data-f=word]');if(f)f.focus()}
 function renderWords(){
- const L=$('wList');L.innerHTML='';
- if(!dbWords.length){L.innerHTML='<span class="text-slate-400">Zatiaľ žiadne vlastné slová.</span>';return}
- dbWords.forEach(x=>{
-  const s=document.createElement('span');
-  s.className='inline-flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-1.5 font-semibold';
-  s.innerHTML=`${esc(x.emoji||'🖼')} ${esc(x.word)} <button class="text-brand-pink" aria-label="Zmazať ${esc(x.word)}">✕</button>`;
-  s.querySelector('button').onclick=()=>delWord(x.id);
-  L.appendChild(s);
- });
+ const W=$('wTable');
+ if(!rows.length){W.innerHTML='<p class="text-slate-400">Zatiaľ žiadne vlastné slová. Pridaj prvé tlačidlom „+ Slovo“.</p>';return}
+ const pend='<span class="text-xs text-brand-orange font-semibold">neuložené</span>';
+ W.innerHTML=`<table class="w-full"><thead><tr><th>Obrázok</th><th>Emoji</th><th>Slovo</th><th>Nahrávka</th><th></th></tr></thead><tbody>${rows.map((r,i)=>{
+  const img=r.imgPrev||r.image_url,aud=r.audPrev||r.audio_url;
+  return `<tr data-i="${i}">
+  <td>${img?`<img src="${esc(img)}" alt="" class="w-12 h-12 object-contain inline-block mr-1">`:''}<label class="btn bg-slate-500 text-xs cursor-pointer inline-block">Nahrať<input type="file" accept="image/*" data-f="img" class="hidden"></label>${img?' <button data-a="clrimg" class="text-brand-pink" aria-label="Odstrániť obrázok">✕</button>':''} ${r.imgFile?pend:''}</td>
+  <td><input class="inp" data-f="emoji" value="${esc(r.emoji)}" maxlength="8" size="4" aria-label="Emoji"></td>
+  <td><input class="inp uppercase" data-f="word" value="${esc(r.word)}" maxlength="20" aria-label="Slovo"></td>
+  <td>${aud?'<button data-a="play" class="btn bg-brand-green text-xs" aria-label="Prehrať">▶</button> ':''}<label class="btn bg-slate-500 text-xs cursor-pointer inline-block">Nahrať<input type="file" accept="audio/*" data-f="aud" class="hidden"></label>${aud?' <button data-a="clraud" class="text-brand-pink" aria-label="Odstrániť nahrávku">✕</button>':''} ${r.audFile?pend:''}</td>
+  <td><button data-a="del" class="text-xl" aria-label="Zmazať riadok">🗑</button></td></tr>`}).join('')}</tbody></table>`;
 }
-async function addWord(){
- const w=$('wWord').value.trim().toUpperCase(),e=$('wEmoji').value.trim(),im=$('wImg').value.trim();
- if(!WORD_RE.test(w)){toast('Slovo môže mať len písmenká, bez medzier.');return}
- if(!e&&!im){toast('Pridaj emoji alebo adresu obrázka.');return}
- const {error}=await sb.from('class_words').insert({class_code:cls.code,word:w,emoji:e||null,image_url:im||null});
- if(error){toast('Nepodarilo sa pridať: '+error.message);return}
- ['wWord','wEmoji','wImg'].forEach(i=>$(i).value='');
- await loadWords();renderWords();
+$('wTable').addEventListener('input',e=>{
+ const f=e.target.dataset.f,tr=e.target.closest('tr');
+ if(!tr||(f!=='word'&&f!=='emoji'))return;
+ rows[+tr.dataset.i][f]=e.target.value;markDirty('w');
+});
+$('wTable').addEventListener('change',e=>{
+ const f=e.target.dataset.f,tr=e.target.closest('tr'),file=e.target.files&&e.target.files[0];
+ if(!tr||!file||(f!=='img'&&f!=='aud'))return;
+ const ok=f==='img'?file.type.startsWith('image/')&&file.size<=2e6:file.type.startsWith('audio/')&&file.size<=5e6;
+ if(!ok){toast(f==='img'?'Obrázok musí mať do 2 MB.':'Nahrávka musí byť zvuk do 5 MB.');return}
+ const r=rows[+tr.dataset.i];
+ if(f==='img'){r.imgFile=file;r.imgPrev=URL.createObjectURL(file)}else{r.audFile=file;r.audPrev=URL.createObjectURL(file)}
+ markDirty('w');renderWords();
+});
+$('wTable').addEventListener('click',e=>{
+ const b=e.target.closest('button[data-a]');if(!b)return;
+ const i=+b.closest('tr').dataset.i,r=rows[i],a=b.dataset.a;
+ if(a==='play'){new Audio(r.audPrev||r.audio_url).play().catch(()=>toast('Nahrávku sa nepodarilo prehrať.'));return}
+ if(a==='del'){if(r.id)delRows.push(r);rows.splice(i,1)}
+ if(a==='clrimg'){if(r.imgFile){r.imgFile=null;r.imgPrev=null}else{if(r.image_url)trash.push(r.image_url);r.image_url=''}}
+ if(a==='clraud'){if(r.audFile){r.audFile=null;r.audPrev=null}else{if(r.audio_url)trash.push(r.audio_url);r.audio_url=''}}
+ markDirty('w');renderWords();
+});
+const pathOf=u=>{const k=`/public/${BUCKET}/`,i=(u||'').indexOf(k);return i<0?null:decodeURIComponent(u.slice(i+k.length))};
+const rmFiles=async urls=>{const p=urls.map(pathOf).filter(Boolean);if(p.length)await sb.storage.from(BUCKET).remove(p)};
+async function upFile(file,kind){
+ const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'bin';
+ const path=`${cls.code}/${kind}/${crypto.randomUUID()}.${ext}`;
+ const {error}=await sb.storage.from(BUCKET).upload(path,file,{contentType:file.type,cacheControl:'31536000'});
+ if(error)throw error;
+ return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
-async function delWord(id){
- const {error}=await sb.from('class_words').delete().eq('id',id);
- if(error){toast('Nepodarilo sa zmazať: '+error.message);return}
- await loadWords();renderWords();
+async function saveWords(){
+ for(const r of rows){
+  r.word=r.word.trim().toUpperCase();
+  if(!WORD_RE.test(r.word)){toast(`Slovo „${r.word||'(prázdne)'}“ môže mať len písmenká, bez medzier.`);return}
+ }
+ $('wSave').disabled=true;
+ try{
+  for(const r of delRows){
+   const {error}=await sb.from('class_words').delete().eq('id',r.id);if(error)throw error;
+   trash.push(r.image_url,r.audio_url);
+  }
+  delRows=[];
+  for(const r of rows){
+   if(r.imgFile){if(r.image_url)trash.push(r.image_url);r.image_url=await upFile(r.imgFile,'img');r.imgFile=r.imgPrev=null}
+   if(r.audFile){if(r.audio_url)trash.push(r.audio_url);r.audio_url=await upFile(r.audFile,'audio');r.audFile=r.audPrev=null}
+   const p={word:r.word,emoji:r.emoji.trim()||null,image_url:r.image_url||null,audio_url:r.audio_url||null};
+   const q=r.id?sb.from('class_words').update(p).eq('id',r.id):sb.from('class_words').insert({...p,class_code:cls.code}).select('id').single();
+   const {data,error}=await q;if(error)throw error;
+   if(!r.id)r.id=data.id;
+  }
+  await rmFiles(trash);trash=[];
+  await loadWords();loadRows();renderWords();toast('Slová uložené.');
+ }catch(err){toast('Nepodarilo sa uložiť: '+(err.message||err))}
+ finally{$('wSave').disabled=false}
 }
+
+/* --- Výsledky s filtrom a zoradením --- */
 async function loadResults(){
  const R=$('res');R.textContent='Načítavam…';
  const {data,error}=await sb.from('student_results').select('student_name,level,word,is_first_try,created_at').eq('class_code',cls.code).order('created_at',{ascending:false}).limit(5000);
  if(error){R.textContent='Chyba: '+error.message;return}
- if(!data.length){R.textContent='Zatiaľ nikto necvičil.';return}
+ resData=data;renderResults();
+}
+function renderResults(){
+ const R=$('res');
+ if(!resData.length){R.textContent='Zatiaľ nikto necvičil.';return}
+ const lv=$('rLv').value,wq=$('rWord').value.trim().toUpperCase();
+ const data=resData.filter(r=>(!lv||String(r.level)===lv)&&(!wq||r.word.includes(wq)));
+ if(!data.length){R.textContent='Filtru nič nezodpovedá.';return}
  const S={},H={},wk=Date.now()-7*864e5,pct=(a,b)=>Math.round(100*a/b)+' %';
  data.forEach(r=>{
-  const s=S[r.student_name]??={n:0,ok:0,days:new Set(),wk:0,last:r.created_at,lv:{}},d=new Date(r.created_at);
+  const s=S[r.student_name]??={name:r.student_name,n:0,ok:0,days:new Set(),wk:0,last:r.created_at,lv:{}},d=new Date(r.created_at);
   s.n++;if(r.is_first_try)s.ok++;s.days.add(d.toDateString());if(+d>wk)s.wk++;
   const l=s.lv[r.level]??={n:0,ok:0};l.n++;if(r.is_first_try)l.ok++;
   if(!r.is_first_try)H[r.word]=(H[r.word]||0)+1;
  });
- const rows=Object.entries(S).sort((a,b)=>b[1].last.localeCompare(a[1].last)).map(([name,s])=>
-  `<tr><td class="font-bold">${esc(name)}</td><td>${new Date(s.last).toLocaleDateString('sk-SK')}</td><td>${s.days.size}</td><td>${s.wk}</td><td>${s.n}</td><td>${pct(s.ok,s.n)}</td><td>${Object.entries(s.lv).map(([k,l])=>`${k}: ${l.n}× (${pct(l.ok,l.n)})`).join('<br>')}</td></tr>`).join('');
+ const cmp={last:(a,b)=>b.last.localeCompare(a.last),name:(a,b)=>a.name.localeCompare(b.name,'sk'),count:(a,b)=>b.n-a.n,rateAsc:(a,b)=>a.ok/a.n-b.ok/b.n,rateDesc:(a,b)=>b.ok/b.n-a.ok/a.n}[$('rSort').value];
+ const rows=Object.values(S).sort(cmp).map(s=>
+  `<tr><td class="font-bold">${esc(s.name)}</td><td>${new Date(s.last).toLocaleDateString('sk-SK')}</td><td>${s.days.size}</td><td>${s.wk}</td><td>${s.n}</td><td>${pct(s.ok,s.n)}</td><td>${Object.entries(s.lv).map(([k,l])=>`${k}: ${l.n}× (${pct(l.ok,l.n)})`).join('<br>')}</td></tr>`).join('');
  const hw=Object.entries(H).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([w,n])=>`${esc(w)} (${n}×)`).join(', ')||'zatiaľ žiadne';
  R.innerHTML=`<table class="w-full"><thead><tr><th>Dieťa</th><th>Naposledy</th><th>Dní cvičenia</th><th>Slov za 7 dní</th><th>Slov spolu</th><th>Na prvý pokus</th><th>Podľa úrovní (slov, úspešnosť)</th></tr></thead><tbody>${rows}</tbody></table><p class="mt-3 text-slate-600"><strong>Najťažšie slová:</strong> ${hw}</p>`;
 }
